@@ -40,4 +40,3 @@ def deleteLocators():
     nodes = base.ls("Loc_*")
     base.delete(nodes)
     
-    ##HELLO WORLD##
