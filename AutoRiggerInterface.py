@@ -4,6 +4,8 @@ from functools import partial
 base.window("Auto Rigger")
 base.rowColumnLayout(nc = 2)
 
+
+
 base.button(l = "Create Locators", w = 200, c = "createLocators()")
 base.button(l = "Delete Locators", w = 200, c = "deleteLocators()")
 
@@ -12,6 +14,15 @@ base.button(l = "Delete Locators", w = 200, c = "deleteLocators()")
 
 base.text("Spine Count", l = "Spine Count")
 spineCount = base.intField(minValue = 1, maxValue = 10, value = 4)
+
+base.text("Finger Count", l = "Finger Count")
+fingerCount = base.intField(minValue = 1, maxValue = 10, value = 4)
+
+base.text("Finger Joints", l = "Finger Joints")
+fingerJoints = base.intField(minValue = 1, maxValue = 10, value = 4)
+ 
+base.text("Rig Name", l = "Rig Name")
+rigName = base.textField()
 
 base.showWindow()
 
@@ -23,13 +34,13 @@ def createLocators():
     else:
         base.group(em = True, name = "Loc_Master")
     
-    root = base.spaceLocator(n = 'Loc_ROOT')
+    root = base.spaceLocator(n = "Loc_ROOT")
     #base.scale(10,10,10, root)
     base.move(0, 95, 2, root)
     base.parent(root, "Loc_Master")
     
     createSpine()
-
+    
 def createSpine():
     for i in range (0, base.intField(spineCount, query = True, value = True)):
         spine = base.spaceLocator(n = "Loc_SPINE_" + str(i))
@@ -51,6 +62,15 @@ def createArms(side):
             L_arm = base.group(em = True, name = "L_Arm_GRP")
             base.parent(L_arm, "Loc_SPINE_" + str(base.intField(spineCount, query = True, value = True) - 1))
             base.move(12.338 * side, 148.887, -1.486, L_arm)
+            
+            upperArm = base.spaceLocator(n = "Loc_L_UpperArm")
+            base.parent(upperArm, L_arm)
+            base.move (0, 0, 0, upperArm)
+            
+            
+            
+            
+            
     else: #right
         if base.objExists("R_Arm_GRP"):
             print "Naaaah"
