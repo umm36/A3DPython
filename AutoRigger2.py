@@ -143,25 +143,25 @@ def createLegs(side):
             mc.move(9.9*side,87.8,1.7,L_leg)
             mc.rotate(0,0,0,L_leg)
             
-            L_hip = mc.spaceLocator(n = rN()+"_Loc_L_Arm_Hip")
+            L_hip = mc.spaceLocator(n = rN()+"_Loc_L_Leg_Hip")
             mc.move(9.9*side,87.8,1.7, L_hip)
             mc.parent(L_hip, L_leg)
             mc.scale(1,1,1,L_hip)
             mc.rotate(0,0,0,L_hip)
 
-            L_knee = mc.spaceLocator(n = rN()+"_Loc_L_Arm_Knee")
+            L_knee = mc.spaceLocator(n = rN()+"_Loc_L_Leg_Knee")
             mc.move(11.9*side,46.4,1.1, L_knee)
             mc.parent(L_knee, L_hip)
             mc.scale(1,1,1,L_knee)
             mc.rotate(0,0,0,L_knee)
             
-            L_ankle = mc.spaceLocator(n = rN()+"_Loc_L_Arm_Ankle") #Elbow
+            L_ankle = mc.spaceLocator(n = rN()+"_Loc_L_Leg_Ankle") #Elbow
             mc.move(14.8*side,2.4,-3.8, L_ankle)
             mc.parent(L_ankle, L_knee)
             mc.scale(1,1,1,L_ankle)
             mc.rotate(0,0,0,L_ankle)
             
-            L_toes = mc.spaceLocator(n = rN()+"_Loc_L_Arm_Toes") #Wrist
+            L_toes = mc.spaceLocator(n = rN()+"_Loc_L_Leg_Toes") #Wrist
             mc.move(17*side,2.7,7.8, L_toes)
             mc.parent(L_toes, L_ankle)
             mc.scale(1,1,1,L_toes)
@@ -176,25 +176,25 @@ def createLegs(side):
             mc.move(9.9*side,87.8,1.7,R_leg)
             mc.rotate(0,0,0,R_leg)
             
-            R_hip = mc.spaceLocator(n = rN()+"_Loc_R_Arm_Hip")
+            R_hip = mc.spaceLocator(n = rN()+"_Loc_R_Leg_Hip")
             mc.move(9.9*side,87.8,1.7, R_hip)
             mc.parent(R_hip, R_leg)
             mc.scale(1,1,1,R_hip)
             mc.rotate(0,0,0,R_hip)
 
-            R_knee = mc.spaceLocator(n = rN()+"_Loc_R_Arm_Knee")
+            R_knee = mc.spaceLocator(n = rN()+"_Loc_R_Leg_Knee")
             mc.move(11.9*side,46.4,1.1, R_knee)
             mc.parent(R_knee, R_hip)
             mc.scale(1,1,1,R_knee)
             mc.rotate(0,0,0,R_knee)
             
-            R_ankle = mc.spaceLocator(n = rN()+"_Loc_R_Arm_Ankle") #Elbow
+            R_ankle = mc.spaceLocator(n = rN()+"_Loc_R_Leg_Ankle") #Elbow
             mc.move(14.8*side,2.4,-3.8, R_ankle)
             mc.parent(R_ankle, R_knee)
             mc.scale(1,1,1,R_ankle)
             mc.rotate(0,0,0,R_ankle)
             
-            R_toes = mc.spaceLocator(n = rN()+"_Loc_R_Arm_Toes") #Wrist
+            R_toes = mc.spaceLocator(n = rN()+"_Loc_R_Leg_Toes") #Wrist
             mc.move(17*side,2.7,7.8, R_toes)
             mc.parent(R_toes, R_ankle)
             mc.scale(1,1,1,R_toes)
