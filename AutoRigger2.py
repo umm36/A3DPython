@@ -9,6 +9,7 @@ mc.window("HAR", title = "Human Auto Rigger", widthHeight = (200, 40))
 mc.rowColumnLayout("Column1", parent = "HAR", adjustableColumn = True)
 mc.button(l = "Create Locators", w = 200, c = "createLocators()")
 mc.button(l = "Delete Locators", w = 200, c = "deleteLocators()")  
+mc.button(l = "Create Joints", w = 200, c = "createJoints()")
       
 mc.text("Spine Count", l = "Spine Count")
 spineCount = mc.intField(minValue = 1, maxValue = 10, value = 4) 
@@ -25,16 +26,16 @@ mc.showWindow()
 
 #loadUI()
 
-def rN(): #   rN()+
+def rN(): #   #Rig Name
     userInput = mc.textField("rigName", query = True, text = True)
     return userInput
 
-def bS(side):
+def bS(side): #Body Side
     if side == 1:
         bodyside = "L"
     else:
         bodyside = "R"
-    return bodyside
+    return str(bodyside)
 
 ##Scripting##
 
@@ -65,7 +66,7 @@ def createSpine():
 
 def createArms(side):
     if side == 1:
-        if mc.objExists(rN()+"_L_Arm_GRP"):
+        if mc.objExists(rN()+"_"+bS(side)+"_Arm_GRP"):
             print "Arms already exist."
         else:
             L_arm = mc.group(em = True, name = rN()+"_L_Arm_GRP")
@@ -79,7 +80,7 @@ def createArms(side):
             mc.parent(L_clavicle, L_arm)
             mc.scale(1,1,1,L_clavicle)
             mc.rotate(0,0,0,L_clavicle)
-
+            
             L_shoulder = mc.spaceLocator(n = rN()+"_Loc_L_Arm_Shoulder")
             mc.move(19.8*side,143,-1.4, L_shoulder)
             mc.parent(L_shoulder, L_clavicle)
@@ -107,13 +108,13 @@ def createArms(side):
             mc.scale(side,1,1,R_arm)
             mc.move(12.3*side,148,-1.4,R_arm)
             mc.rotate(0,0,0,R_arm)            
- 
+            
             R_clavicle = mc.spaceLocator(n = rN()+"_Loc_R_Arm_Clavicle")
             mc.move(12.3*side,148,-1.4, R_clavicle)
             mc.parent(R_clavicle, R_arm)           
             mc.scale(1,1,1,R_clavicle)
             mc.rotate(0,0,0,R_clavicle)
-
+            
             R_shoulder = mc.spaceLocator(n = rN()+"_Loc_R_Arm_Shoulder")
             mc.move(19.8*side,143,-1.4, R_shoulder)
             mc.parent(R_shoulder, R_clavicle)
@@ -148,7 +149,7 @@ def createLegs(side):
             mc.parent(L_hip, L_leg)
             mc.scale(1,1,1,L_hip)
             mc.rotate(0,0,0,L_hip)
-
+            
             L_knee = mc.spaceLocator(n = rN()+"_Loc_L_Leg_Knee")
             mc.move(11.9*side,46.4,1.1, L_knee)
             mc.parent(L_knee, L_hip)
@@ -181,7 +182,7 @@ def createLegs(side):
             mc.parent(R_hip, R_leg)
             mc.scale(1,1,1,R_hip)
             mc.rotate(0,0,0,R_hip)
-
+            
             R_knee = mc.spaceLocator(n = rN()+"_Loc_R_Leg_Knee")
             mc.move(11.9*side,46.4,1.1, R_knee)
             mc.parent(R_knee, R_hip)
@@ -199,11 +200,30 @@ def createLegs(side):
             mc.parent(R_toes, R_ankle)
             mc.scale(1,1,1,R_toes)
             mc.rotate(0,0,0,R_toes)
-    
-    
-    print bS(side)
-    
 
+
+    #print bS(side)
+
+def createJoints():
+    if mc.objExists("RIG"):
+        print "Rig already exists"
+    else:
+        jointGRP = mc.group(em = True, name = rN()+"_Joints_GRP")
+        
+        
+        ##create spine joints
+        
+        root = mc.ls("*_Loc_ROOT")
+        
+        allSpines = mc.ls("*_Loc_SPINE_*", type = "locator")
+        spine = mc.listRelatives(*allSpines, p = True, f= True)
+        
+        rootPos = mc.xform(root, q = True, t = True, ws = True)
+        rootJoint = mc.joint(radius = 4, p = rootPos, name = rN()+"_jnt_Root")
+
+        for i, s in enumerate(spine):
+            pos = mc.xform(s, q = True, t = True, ws = True)
+            j = mc.joint(radius = 4, p = pos, name = rN()+"_jnt_Spine_"+str(i))
 
 
 def deleteLocators():

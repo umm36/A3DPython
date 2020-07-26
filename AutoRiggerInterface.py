@@ -68,9 +68,6 @@ def createArms(side):
             base.move (0, 0, 0, upperArm)
             
             
-            
-            
-            
     else: #right
         if base.objExists("R_Arm_GRP"):
             print "Naaaah"
