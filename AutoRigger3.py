@@ -32,7 +32,7 @@ mc.showWindow()
 def rN(): #Rig Name
     userInput = mc.textField("NameOfRig", query = True, text = True)
     return str(userInput)
-    
+        
 ####Scripting####
 def CreateLocators():    
 
@@ -43,7 +43,7 @@ def CreateLocators():
     if mc.objExists(rN()+"_Loc_Master"):
         print 'Loc_Master already exists.'
     else:
-        print rN() + "_Loc_Master"
+        #print rN() + "_Loc_Master"
         
         baseGroup = mc.group(em = True, name = rN() + "_Loc_Master")
         mc.scale(10,10,10, baseGroup)
@@ -62,24 +62,91 @@ def CreateLocators():
             #spineNum = str(mc.intField(spineCount, query = True, value = True) -1) #Needless currently.
             
             #Arm Locators
-            claviclePos = [12.3*offset,148,-1.4]
-            shoulderPos = [19.8*offset,143,-1.4]
-            elbowPos = [30.3*offset,117.6,-2.6]
-            wristPos = [43*offset,93.7,3.3]
+            #claviclePos = [12.3*offset,148,-1.4]
+            #shoulderPos = [19.8*offset,143,-1.4]
+            #elbowPos = [30.3*offset,117.6,-2.6]
+            #wristPos = [43*offset,93.7,3.3]
             
             #Leg Locators
-            hipPos = [9.9*offset, 87.8, 1.7]
-            kneePos = [11.9*offset, 46.4, 1.1]
-            anklePos = [14.8*offset, 2.4, -3.8]
-            toesPos = [17*offset, 2.7, 7.8]
+            #hipPos = [9.9*offset, 87.8, 1.7]
+            #kneePos = [11.9*offset, 46.4, 1.1]
+            #anklePos = [14.8*offset, 2.4, -3.8]
+            #toesPos = [17*offset, 2.7, 7.8]
             
-            #handLocators
-            #wrist 1-5
-            #thumb
-            #index finger
-            #middle finger
-            #ring finger
-            #pinky finger
+            
+            ##HELP## #Is this dictionary needed?
+            '''
+            dictHandDictionaries = {
+            "ArmDict":"dictArmJnts",
+            "ThumbDict":"dictThumbJnts",
+            "IndexDict":"dictIndexJnts",
+            "MiddleDict":"dictMiddleJnts",
+            "RingDict":"dictRingJnts",
+            "PinkyDict":"dictPinkyJnts"
+            }
+            '''
+
+            
+            #Dictionary of details for thumb joints. <<dictionary Key:[Coordinates (needs input), "Limb", "Name of this joint", "Name of the parent joint"]>>
+            
+            ##HELP## #Set up dictionaries outside Create Locators function so both create locators and create Joints functions can call the data inside. ##Done?
+            
+            #Arm joint dictionary.
+            dictArmJnts = {
+            "claviclePos":[(12.3*offset,148,-1.4), "Arm", "Clavicle", "clavicalParent"], ##HELP## #clavicalParent #how to link this?
+            "shoulderPos":[(19.8*offset,143,-1.4), "Arm", "Shoulder", "Clavicle"],
+            "elbowPos":[(30.3*offset,117.6,-2.6), "Arm", "Elbow", "Shoulder"],
+            "wristPos":[(43*offset,93.7,3.3), "Arm", "Wrist", "Elbow"]
+            }
+            '''
+            #Thumb finger joints
+            dictThumbJnts = {
+            "thumbBasePos":[(1*offset, 1 ,1), "Arm", "ThumbBase", "Wrist"],
+            "thumb1Pos":[(1*offset, 2 ,1), "Arm", "Thumb1", "Arm", "ThumbBase"],
+            "thumb2Pos":[(1*offset, 3 ,1), "Arm", "Thumb2", "Arm", "Thumb1"]
+            }
+            
+            #Index finger joints
+            dictIndexJnts = {
+            "indexBasePos":[(2*offset, 1 ,1), "Arm", "IndexFingerBase", "Wrist"],
+            "index1Pos":[(2*offset, 2 ,1), "Arm", "IndexFinger1", "IndexBase"],
+            "index2Pos":[(2*offset, 3 ,1), "Arm", "IndexFinger2", "Index1"],
+            "index3Pos":[(2*offset, 4 ,1), "Arm", "IndexFinger3", "Index2"]
+            }
+            
+            #Middle finger joints
+            dictMiddleJnts = {
+            "middleBasePos":[(3*offset, 1 ,1), "Arm", "MiddleFingerBase", "Wrist"],
+            "middle1Pos":[(3*offset, 2 ,1), "Arm", "MiddleFinger1", "MiddleBase"],
+            "middle2Pos":[(3*offset, 3 ,1), "Arm", "MiddleFinger2", "Middle1"],
+            "middle3Pos":[(3*offset, 4 ,1), "Arm", "MiddleFinger3", "Middle2"]
+            }
+            
+            #Ring finger joints
+            dictRingJnts = {
+            "ringBasePos":[(4*offset, 1 ,1), "Arm", "RingFingerBase", "Wrist"],
+            "ring1Pos":[(4*offset, 2 ,1), "Arm", "RingFinger1", "RingBase"],
+            "ring2Pos":[(4*offset, 3 ,1), "Arm", "RingFinger2", "Ring1"],
+            "ring3Pos":[(4*offset, 4 ,1), "Arm", "RingFinger3", "Ring2"]
+            }
+            
+            #Pinky finger joints
+            dictPinkyJnts = {
+            "pinkyBasePos":[(5*offset, 1 ,1), "Arm", "PinkyFingerBase", "Wrist"],
+            "pinky1Pos":[(5*offset, 2 ,1), "Arm", "PinkyFinger1", "PinkyBase"],
+            "pinky2Pos":[(5*offset, 3 ,1), "Arm", "PinkyFinger2", "Pinky1"],
+            "pinky3Pos":[(5*offset, 4 ,1), "Arm", "PinkyFinger3", "Pinky2"]
+            }
+            
+            #Arm joint dictionary
+            dictLegJnts = {
+            "hipPos":[(9.9*offset, 87.8, 1.7), "Arm", "Hip", "hipParent"], ##HELP## #hipParent #how to link this?
+            "kneePos":[(11.9*offset, 46.4, 1.1), "Arm", "Knee", "Hip"],
+            "anklePos":[(14.8*offset, 2.4, -3.8), "Arm", "Ankle", "Knee"],
+            "toesPos":[(17*offset, 2.7, 7.8), "Arm", "Toes", "Ankle"]
+            }
+            '''
+            
             
             #prevLoc = ""
             if i == "L":
@@ -87,6 +154,7 @@ def CreateLocators():
             
             clavicalParent = rN()+"_Loc_SPINE_"+str(mc.intField(spineCount, query = True, value = True) - 2)
             hipParent = rN()+"_Loc_ROOT"
+            '''
             ####CBB: could be refined/optimised using dictionaries
             Clavicle = spawnLocators(clavicalParent, claviclePos, "Arm", "Clavicle", i)
             Shoulder = spawnLocators(Clavicle, shoulderPos, "Arm", "Shoulder", i)
@@ -96,12 +164,35 @@ def CreateLocators():
             Knee = spawnLocators(Hip, kneePos, "Leg", "Knee", i)
             Ankle = spawnLocators(Knee, anklePos, "Leg", "Ankle", i)
             Toes = spawnLocators(Ankle, toesPos, "Leg", "Toes", i)
+            '''
+            spawnLocators(dictArmJnts)
+            
+def spawnLocators(dict):
+    sides = ["L", "R"]
+    offset = 1
+    for i in sides:
+        if i == "R":
+            offset = -1
+        for key, v in dict.items():         #for key, value in dict.items():
+            #for v in value: ##HELP##       #code breaks if this is here, but only spawns a single wrist locator.
+            '''
+            pos = v[0]
+            posX = pos[0]*offset
+            posY = pos[1]
+            posZ = pos[2]
+            '''
+            jntloc = mc.spaceLocator(n = rN() + "_Loc_" + v[1] + "_" + i + "_" + v[2], position = v[0]) #Add indentation
+            mc.parent(jntloc , rN()+"_Loc_"+ v[1] + "_" + i + "_" + v[3])                               #Add indentation
 
+''' 
+####Old spawnLocators, pre dictionary
 def spawnLocators(parent, pos, limb, joint, i):
     jntloc = mc.spaceLocator(n = rN()+"_Loc_" + i + "_" + limb + "_" + joint, position = pos)
-    mc.parent(jntloc, parent)
+    #mc.parent(jntloc, parent)
+    mc.parent(jntloc , rN()+"_Loc_"+ v[2] + "_" + i + "_" + v[3])
     ##SetScale(jntloc, axis)
     return jntloc
+'''
 
 def createSpine():
     #rN() = rN()
@@ -113,8 +204,6 @@ def createSpine():
             mc.parent(spine, rN()+"_Loc_SPINE_"+str(i-1))
         mc.scale(1,1,1, spine)
         mc.move(0, 110 + (15 * i), 2, spine)
-
-
 
 def SetScale(component, axis):
     for i in axis:
@@ -132,20 +221,31 @@ def deleteJoints():
 
 ####Create Rig####
 def createJoints():
-    if mc.objExists("RIG"):
+    #sides = ["L", "R"] ##HELP## #pass in the function, or sit in here?
+    if mc.objExists(rN()+"_jnt_GRP"):
         print "Rig already exists"
     else:
-        jointGRP = mc.group(em = True, name = rN()+"_jnt_GRP")
+        jointGRP = mc.group(em = True, name = rN()+"_jnt_GRP") #Creates joint group
 
-        ##create spine joints
-
+        #defines locations of all the spine locators
         root = mc.ls("*_Loc_ROOT")
-
         allSpines = mc.ls("*_Loc_SPINE_*", type = "locator")
         spine = mc.listRelatives(*allSpines, p = True, f= True)
-
+        
+        #create spine joints based on locations of spine locators.
         rootPos = mc.xform(root, q = True, t = True, ws = True)
         rootJoint = mc.joint(radius = 4, p = rootPos, name = rN()+"_jnt_Root")
+        
         for i, s in enumerate(spine):
             pos = mc.xform(s, q = True, t = True, ws = True)
             j = mc.joint(radius = 4, p = pos, name = rN()+"_jnt_Spine_"+str(i))
+        
+        
+        ##HELP##
+'''        
+        for i in sides:
+            for key, value in dictThumbJnts.items():
+                for v in value:
+                    j = mc.joint(radius = 4, p = [0], name = rN()+"_jnt_"+ v[2] + "_" + i + "_" + v[1]) #NO! these lines are for spawning locators, not joints.
+                    mc.parent(j , rN()+"_jnt_"+ v[2] + "_" + i + "_" + v[3])
+'''                    
