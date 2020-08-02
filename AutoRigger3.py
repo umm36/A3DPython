@@ -51,12 +51,12 @@ def CreateLocators():
         root = mc.spaceLocator(n = rN()+"_Loc_ROOT")
         mc.move(0,95,2, rN()+"_Loc_ROOT")
         mc.parent(root, rN()+"_Loc_Master")
-    for i in sides:
-        if mc.objExists(rN()+"_" + i + "_Arm_GRP"):
+    for side in sides:
+        if mc.objExists(rN()+"_" + side + "_Arm_GRP"):
             print "Arms already exist."
         else:
             #Re-setting offset side
-            if i == "R":
+            if side == "R":
                 offset = -1
 
             #spineNum = str(mc.intField(spineCount, query = True, value = True) -1) #Needless currently.
@@ -87,17 +87,11 @@ def CreateLocators():
             '''
 
             
-            #Dictionary of details for thumb joints. <<dictionary Key:[Coordinates (needs input), "Limb", "Name of this joint", "Name of the parent joint"]>>
+ 
             
-            ##HELP## #Set up dictionaries outside Create Locators function so both create locators and create Joints functions can call the data inside. ##Done?
             
-            #Arm joint dictionary.
-            dictArmJnts = {
-            "claviclePos":[(12.3*offset,148,-1.4), "Arm", "Clavicle", "clavicalParent"], ##HELP## #clavicalParent #how to link this?
-            "shoulderPos":[(19.8*offset,143,-1.4), "Arm", "Shoulder", "Clavicle"],
-            "elbowPos":[(30.3*offset,117.6,-2.6), "Arm", "Elbow", "Shoulder"],
-            "wristPos":[(43*offset,93.7,3.3), "Arm", "Wrist", "Elbow"]
-            }
+            
+            
             '''
             #Thumb finger joints
             dictThumbJnts = {
@@ -149,44 +143,79 @@ def CreateLocators():
             
             
             #prevLoc = ""
-            if i == "L":
+            if side == "L":
                 createSpine()
             
             clavicalParent = rN()+"_Loc_SPINE_"+str(mc.intField(spineCount, query = True, value = True) - 2)
             hipParent = rN()+"_Loc_ROOT"
+            
+            
+            #Dictionary of details for thumb joints. <<dictionary Key:[Coordinates (needs input), "Limb", "Name of this joint", "Name of the parent joint"]>>
+            
+            ##HELP## #Set up dictionaries outside Create Locators function so both create locators and create Joints functions can call the data inside. ##Done?
+            
+            #Arm joint dictionary.
+            dictArray = [{"claviclePos":[(12.3*offset,148,-1.4), "Arm", "Clavicle", clavicalParent]}, ##HELP## #clavicalParent #how to link this?
+            {"shoulderPos":[(19.8*offset,143,-1.4), "Arm", "Shoulder", "Clavicle"]},
+            {"elbowPos":[(30.3*offset,117.6,-2.6), "Arm", "Elbow", "Shoulder"]},
+            {"wristPos":[(43*offset,93.7,3.3), "Arm", "Wrist", "Elbow"]}
+            ]
+            
+            #array = [1,2,3,4,5]
+            
+            #print dictArmJnts[0] 
+            
+            
+            
+            
             '''
             ####CBB: could be refined/optimised using dictionaries
-            Clavicle = spawnLocators(clavicalParent, claviclePos, "Arm", "Clavicle", i)
-            Shoulder = spawnLocators(Clavicle, shoulderPos, "Arm", "Shoulder", i)
-            Elbow = spawnLocators(Shoulder, elbowPos, "Arm", "Elbow", i)
-            Wrist = spawnLocators(Elbow, wristPos, "Arm", "Wrist", i)
-            Hip = spawnLocators(hipParent, hipPos, "Leg", "Hip", i)
-            Knee = spawnLocators(Hip, kneePos, "Leg", "Knee", i)
-            Ankle = spawnLocators(Knee, anklePos, "Leg", "Ankle", i)
-            Toes = spawnLocators(Ankle, toesPos, "Leg", "Toes", i)
+            Clavicle = spawnLocators(clavicalParent, claviclePos, "Arm", "Clavicle", side)
+            Shoulder = spawnLocators(Clavicle, shoulderPos, "Arm", "Shoulder", side)
+            Elbow = spawnLocators(Shoulder, elbowPos, "Arm", "Elbow", side)
+            Wrist = spawnLocators(Elbow, wristPos, "Arm", "Wrist", side)
+            Hip = spawnLocators(hipParent, hipPos, "Leg", "Hip", side)
+            Knee = spawnLocators(Hip, kneePos, "Leg", "Knee", side)
+            Ankle = spawnLocators(Knee, anklePos, "Leg", "Ankle", side)
+            Toes = spawnLocators(Ankle, toesPos, "Leg", "Toes", side)
             '''
-            spawnLocators(dictArmJnts)
             
-def spawnLocators(dict):
-    sides = ["L", "R"]
-    offset = 1
-    for i in sides:
-        if i == "R":
-            offset = -1
+            spawnLocators(dictArray, side)
+            
+def spawnLocators(array, side):
+    
+    for dict in array:
         for key, v in dict.items():         #for key, value in dict.items():
             #for v in value: ##HELP##       #code breaks if this is here, but only spawns a single wrist locator.
+
             '''
-            pos = v[0]
-            posX = pos[0]*offset
-            posY = pos[1]
-            posZ = pos[2]
+            print "\n"
+            print "--------------------"
+            print key, "\n"
+            #print (v[0][0]*offset,v[0][1],v[0][2]), "\n"
+            print v[0]
+            print v[1]
+            print v[2]
+            print v[3]
+            print "--------------------"
             '''
-            jntloc = mc.spaceLocator(n = rN() + "_Loc_" + v[1] + "_" + i + "_" + v[2], position = v[0]) #Add indentation
-            mc.parent(jntloc , rN()+"_Loc_"+ v[1] + "_" + i + "_" + v[3])                               #Add indentation
+                   
+            jntloc = mc.spaceLocator(n = rN() + "_Loc_" + v[1] + "_" + side + "_" + v[2], position = v[0]) #Add indentation
+
+            if key != "claviclePos" and key != "hipPos":
+                print key
+                mc.parent(jntloc , rN()+"_Loc_"+ v[1] + "_" + side + "_" + v[3])                               #Add indentation                
+            elif key == "claviclePos":
+                mc.parent(jntloc, rN()+"_Loc_SPINE_"+str(mc.intField(spineCount, query = True, value = True) - 2))
+            else:
+                mc.parent(jntloc, rN()+"_Loc_ROOT")
+            
+            
+            
 
 ''' 
 ####Old spawnLocators, pre dictionary
-def spawnLocators(parent, pos, limb, joint, i):
+def spawnLocators(parent, pos, limb, joint, side):
     jntloc = mc.spaceLocator(n = rN()+"_Loc_" + i + "_" + limb + "_" + joint, position = pos)
     #mc.parent(jntloc, parent)
     mc.parent(jntloc , rN()+"_Loc_"+ v[2] + "_" + i + "_" + v[3])
@@ -242,10 +271,9 @@ def createJoints():
         
         
         ##HELP##
-'''        
+        
         for i in sides:
             for key, value in dictThumbJnts.items():
                 for v in value:
                     j = mc.joint(radius = 4, p = [0], name = rN()+"_jnt_"+ v[2] + "_" + i + "_" + v[1]) #NO! these lines are for spawning locators, not joints.
                     mc.parent(j , rN()+"_jnt_"+ v[2] + "_" + i + "_" + v[3])
-'''                    
