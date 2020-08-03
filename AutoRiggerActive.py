@@ -6,12 +6,12 @@ import maya.cmds as mc
 
 if mc.window("HAR", query = True, exists = True):
     mc.deleteUI("HAR")
-mc.window("HAR", title = "Human Auto Rigger", widthHeight = (200, 40))
+mc.window("HAR", title = "Human Auto Rigger", widthHeight = (175, 40))
 mc.rowColumnLayout("Column1", parent = "HAR", adjustableColumn = True, nc = 2)
 mc.button(l = "Create Locators", c = "CreateLocators()")
-mc.button(l = "Delete Locators", w = 200, c = "deleteLocators()")  
+mc.button(l = "Delete Locators", w = 175, c = "deleteLocators()")  
 mc.button(l = "Create Joints", c = "createJoints()")
-mc.button(l = "Delete Joints", w = 200, c = "deleteJoints()")
+mc.button(l = "Delete Joints", w = 175, c = "deleteJoints()")
       
 mc.text("Spine Count", l = "Spine Count")
 spineCount = mc.intField(minValue = 1, maxValue = 10, value = 4) 
@@ -155,7 +155,7 @@ def spawnLocators(array, side):
                 jntloc = mc.spaceLocator(n = rN() + "_Loc_" + v[1] + "_" + side + "_" + v[2], position = v[0])
                 
                 if key != "claviclePos" and key != "hipPos":
-                    print key
+                    #print key
                     mc.parent(jntloc , rN()+"_Loc_"+ v[1] + "_" + side + "_" + v[3])
                 elif key == "claviclePos":
                     mc.parent(jntloc, rN()+"_Loc_SPINE_"+str(mc.intField(spineCount, query = True, value = True) - 2))
@@ -186,7 +186,6 @@ def deleteJoints():
     nodes = mc.ls(rN()+"_jnt_*")
     mc.delete(nodes)
 
-
 ####Create Rig####
 def createJoints():
     sides = ["L", "R"] ##HELP## #pass in the function, or sit in here?
@@ -194,12 +193,27 @@ def createJoints():
         print "Rig already exists"
     else:
         jointGRP = mc.group(em = True, name = rN()+"_jnt_GRP") #Creates joint group
-
+        '''
         #defines locations of all the spine locators
         root = mc.ls("*_Loc_ROOT")
         allSpines = mc.ls("*_Loc_SPINE_*", type = "locator")
         spine = mc.listRelatives(*allSpines, p = True, f= True)
-        #mc.name (root, "bob")
+        
+        #create spine joints based on locations of spine locators.
+        rootPos = mc.xform(root, q = True, t = True, ws = True)
+        rootJoint = mc.joint(radius = 4, p = rootPos, name = rN()+"_jnt_Root")
+        
+        for i, s in enumerate(spine):
+            pos = mc.xform(s, q = True, t = True, ws = True)
+            j = mc.joint(radius = 4, p = pos, name = rN()+"_jnt_Spine_"+str(i))
+        '''
+        ##___________________________
+        
+        
+        #defines locations of all the spine locators
+        root = mc.ls("*_Loc_ROOT")
+        allSpines = mc.ls("*_Loc_*", type = "locator")
+        spine = mc.listRelatives(*allSpines, p = True, f= True)
         
         #create spine joints based on locations of spine locators.
         rootPos = mc.xform(root, q = True, t = True, ws = True)
@@ -210,9 +224,21 @@ def createJoints():
             j = mc.joint(radius = 4, p = pos, name = rN()+"_jnt_Spine_"+str(i))
         
         
+        
+        
+        
+        
+        
+        
+
+
+
+
+'''        
         ##HELP##       
         for i in sides:
             for key, value in dictThumbJnts.items():
                 for v in value:
                     j = mc.joint(radius = 4, p = [0], name = rN()+"_jnt_"+ v[2] + "_" + i + "_" + v[1]) #NO! these lines are for spawning locators, not joints.
                     mc.parent(j , rN()+"_jnt_"+ v[2] + "_" + i + "_" + v[3])
+'''
