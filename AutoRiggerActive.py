@@ -8,7 +8,7 @@ if mc.window("HAR", query = True, exists = True):
     mc.deleteUI("HAR")
 mc.window("HAR", title = "Human Auto Rigger", widthHeight = (175, 40))
 mc.rowColumnLayout("Column1", parent = "HAR", adjustableColumn = True, nc = 2)
-mc.button(l = "Create Locators", c = "CreateLocators()")
+mc.button(l = "Create Locators", c = "createLocators()")
 mc.button(l = "Delete Locators", w = 175, c = "deleteLocators()")  
 mc.button(l = "Create Joints", c = "createJoints()")
 mc.button(l = "Delete Joints", w = 175, c = "deleteJoints()")
@@ -37,7 +37,7 @@ def createLocators():
     print "making locators"
     CreateDictionaries("_Loc_")
     
-def createLocators():
+def createJoints():
     print "making joints"
     CreateDictionaries("_jnt_")
 
@@ -53,7 +53,7 @@ def CreateDictionaries(function):
         if side == "R":
             offset = -1
         
-        if side == "L":
+        if function == "_Loc_" and side == "L":
             createSpine()
         
         clavicalParent = rN()+ function + "SPINE_"+str(mc.intField(spineCount, query = True, value = True) - 2)
@@ -127,13 +127,14 @@ def CreateDictionaries(function):
         dictPinkyJnts,
         dictLegJnts
         ]
-        
         if function == "_Loc_":
             spawnLocators(dictionaryArray, side, function)
         elif function == "_jnt_":
-            createJoints(dictionaryArray, side, function)
-            
-        mc.select(rN() + function + "Master")
+            print "Making joints for the " + side + " side."
+            spawnJoints(dictionaryArray, side, function)
+        
+        mc.select(rN() + "_Loc_" + "Master")
+        
             
 def spawnLocators(dictArray, side, function):
     for dictionary in dictArray:
@@ -144,31 +145,30 @@ def spawnLocators(dictArray, side, function):
                 mc.move(v[0][0],v[0][1],v[0][2], jntloc)
                  
                 if key != "claviclePos" and key != "hipPos":
-                    #print key
                     mc.parent(jntloc , rN()+ function + v[1] + "_" + side + "_" + v[3])
                 elif key == "claviclePos":
                     mc.parent(jntloc, rN()+ function + "SPINE_"+str(mc.intField(spineCount, query = True, value = True) - 2))
                 else:                    
                     mc.parent(jntloc, rN()+ function + "ROOT")
 
-def createSpine():    
+def createSpine():
     if mc.objExists(rN()+"_Loc_Master"):
         print 'Loc_Master already exists.'
     else:
         baseGroup = mc.group(em = True, name = rN() + "_Loc_Master")
-        mc.scale(10,10,10, baseGroup)
+        mc.scale(1,1,1, baseGroup)
         root = mc.spaceLocator(n = rN()+"_Loc_ROOT")
         mc.move(0,95,2, rN()+"_Loc_ROOT")
         mc.parent(root, rN()+"_Loc_Master")    
     
-    for i in range (0, mc.intField(spineCount, query = True, value = True)):
-        spine = mc.spaceLocator(n = rN()+"_Loc_SPINE_" + str(i))
-        if i == 0:
-            mc.parent(spine, rN()+"_Loc_ROOT")            
-        else:
-            mc.parent(spine, rN()+"_Loc_SPINE_"+str(i-1))
-        mc.scale(1,1,1, spine)
-        mc.move(0, 110 + (15 * i), 2, spine)
+        for i in range (0, mc.intField(spineCount, query = True, value = True)):
+            spine = mc.spaceLocator(n = rN()+"_Loc_SPINE_" + str(i))
+            if i == 0:
+                mc.parent(spine, rN()+"_Loc_ROOT")            
+            else:
+                mc.parent(spine, rN()+"_Loc_SPINE_"+str(i-1))
+            mc.scale(1,1,1, spine)
+            mc.move(0, 110 + (15 * i), 2, spine)
 
 def SetScale(component, axis):
     for i in axis:
@@ -183,87 +183,47 @@ def deleteJoints():
     nodes = mc.ls(rN()+"_jnt_*")
     mc.delete(nodes)
 
-'''
-####Create Rig####
-def createJoints():
-    sides = ["L", "R"] ##HELP## #pass in the function, or sit in here?
+def spawnJoints(dictArray, side, function):
+    rigSwitch = ["_IK", "_FK", "_Bind"]
     if mc.objExists(rN()+"_jnt_GRP"):
         print "Rig already exists"
     else:
         jointGRP = mc.group(em = True, name = rN()+"_jnt_GRP") #Creates joint group
-'''
-'''
+        
         #defines locations of all the spine locators
         root = mc.ls("*_Loc_ROOT")
-        allSpines = mc.ls("*_Loc_SPINE_*", type = "locator")
+        allSpines = mc.ls("*_Loc_SPINE*", type = "locator")
         spine = mc.listRelatives(*allSpines, p = True, f= True)
         
         #create spine joints based on locations of spine locators.
         rootPos = mc.xform(root, q = True, t = True, ws = True)
-        rootJoint = mc.joint(radius = 4, p = rootPos, name = rN()+"_jnt_Root")
-        
+        rootJoint = mc.joint(radius = 4, p = rootPos, name = rN()+ function + "ROOT")        
         for i, s in enumerate(spine):
             pos = mc.xform(s, q = True, t = True, ws = True)
-            j = mc.joint(radius = 4, p = pos, name = rN()+"_jnt_Spine_"+str(i))
-'''
-'''
-        ##___________________________
-        
-        
-        #defines locations of all the spine locators
-        root = mc.ls("*_Loc_ROOT")
-        allSpines = mc.ls("*_Loc_*", type = "locator")
-        spine = mc.listRelatives(*allSpines, p = True, f= True)
-        
-        #create spine joints based on locations of spine locators.
-        rootPos = mc.xform(root, q = True, t = True, ws = True)
-        rootJoint = mc.joint(radius = 4, p = rootPos, name = rN()+"_jnt_Root")
-        
-        for i, s in enumerate(spine):
-            pos = mc.xform(s, q = True, t = True, ws = True)
-            j = mc.joint(radius = 4, p = pos, name = rN()+"_jnt_Spine_"+str(i))
-'''
+            j = mc.joint(radius = 4, p = pos, name = rN()+ function + "SPINE_"+str(i+1))
+    print side
+    for switch in rigSwitch:
+        for dictionary in dictArray:
+            for dict in dictionary:
+                for key, v in dict.items():
+                    
+                    #locPos = mc.translate(rN() + "_Loc_" + v[1] + "_" + side + "_" + v[2], joint) ##HELP## #Define the location of the associated locator
+                    #print locPos #print said location
+                    
+                    joint = mc.joint(radius = 4, n = rN() + "_jnt_" + v[1] + "_" + side + "_" + v[2] + switch, position = v[0]) #Create a joint at the location of the associated locator.
 
-def createJoints(dictArray, side, function):
-    rigSwitch = ["IK", "FK", "Bind"]
-    if mc.objExists(rN()+"_jnt_GRP"):
-        print "Rig already exists"
-    else:
-        jointGRP = mc.group(em = True, name = rN()+"_jnt_GRP") #Creates joint group
-        #defines locations of all the spine locators
-        root = mc.ls("*_Loc_ROOT")
-        allSpines = mc.ls("*_Loc_*", type = "locator")
-        spine = mc.listRelatives(*allSpines, p = True, f= True)
-        
-        #create spine joints based on locations of spine locators.
-        rootPos = mc.xform(root, q = True, t = True, ws = True)
-        rootJoint = mc.joint(radius = 4, p = rootPos, name = rN()+"_jnt_Root")
-        
-        for switch in rigSwitch:
-            for dictionary in dictArray:
-                for dict in dictionary:
-                    for key, v in dict.items():
-                        joint = mc.joint(radius = 4, n = rN() + "_jnt_" + v[1] + "_" + side + "_" + v[2] + switch)                
-                        mc.move(rN() + "_Loc_" + v[1] + "_" + side + "_" + v[2], joint)
-                        
-                        if key != "claviclePos" and key != "hipPos":
-                            mc.parent(joint , rN()+"_jnt_"+ v[1] + "_" + side + "_" + v[3] + switch)
-                        elif key == "claviclePos":
-                            mc.parent(joint, rN()+"_jnt_SPINE_"+str(mc.intField(spineCount, query = True, value = True) - 2))
-                        else:                    
-                            mc.parent(joint, rN()+"_jnt_ROOT")
-
-
-
-
-
-
-
-'''        
-        ##HELP##       
-        for i in sides:
-            for key, value in dictThumbJnts.items():
-                for v in value:
-                    j = mc.joint(radius = 4, p = [0], name = rN()+"_jnt_"+ v[2] + "_" + i + "_" + v[1]) #NO! these lines are for spawning locators, not joints.
-                    mc.parent(j , rN()+"_jnt_"+ v[2] + "_" + i + "_" + v[3])
-'''
+                    #mc.move(rN() + "_Loc_" + v[1] + "_" + side + "_" + v[2], joint)
+                    #print key                        
+                        #print rN()+"_jnt_"+ v[1] + "_" + side + "_" + v[3] + switch
+                    
+                    if key != "claviclePos" and key != "hipPos":
+                        mc.parent(joint, rN()+"_jnt_GRP") ##HELP## Why do I have to parent the joint to something else for this to work?
+                        mc.parent(joint, rN()+"_jnt_"+ v[1] + "_" + side + "_" + v[3] + switch)
+                    elif key == "claviclePos":
+                        #print "I am " + joint + " of " + key                        
+                        #print "I want to bind to " + rN()+"_jnt_"+ v[1] + "_" + side + "_" + v[3]                           
+                        #print "_________"
+                        mc.parent(joint, rN()+"_jnt_SPINE_"+str(mc.intField(spineCount, query = True, value = True) - 1))
+                    else:
+                        mc.parent(joint, rN()+"_jnt_ROOT")
+                    
