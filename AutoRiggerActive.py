@@ -1,9 +1,6 @@
 import maya.cmds as mc
 
 ##setup##
-#def loadUI():
-
-
 if mc.window("HAR", query = True, exists = True):
     mc.deleteUI("HAR")
 mc.window("HAR", title = "Human Auto Rigger", widthHeight = (175, 40))
@@ -11,23 +8,20 @@ mc.rowColumnLayout("Column1", parent = "HAR", adjustableColumn = True, nc = 2)
 mc.button(l = "Create Locators", c = "createLocators()")
 mc.button(l = "Delete Locators", w = 175, c = "deleteLocators()")  
 mc.button(l = "Create Joints", c = "createJoints()")
-mc.button(l = "Delete Joints", w = 175, c = "deleteJoints()")
-      
+mc.button(l = "Delete Joints", w = 175, c = "deleteJoints()")      
 mc.text("Spine Count", l = "Spine Count")
-spineCount = mc.intField(minValue = 1, maxValue = 10, value = 4) 
-       
+spineCount = mc.intField(minValue = 1, maxValue = 10, value = 4)        
 mc.text("Finger Count", l = "Finger Count")
-fingerCount = mc.intField(minValue = 1, maxValue = 10, value = 4)  
-      
+fingerCount = mc.intField(minValue = 1, maxValue = 10, value = 4)      
 mc.text("Finger Joints", l = "Finger Joints")
-fingerJoints = mc.intField(minValue = 1, maxValue = 10, value = 3) 
-       
+fingerJoints = mc.intField(minValue = 1, maxValue = 10, value = 3)
+
+mc.button(l = "Scream", w = 175, c = "HowthefuckdoImakeControls()")
+mc.button(l = "GenerateControls", w = 175, c = "HowthefuckdoImakeControls()")
+
 mc.text("Rig Name", l = "Rig Name")    
 mc.textField("NameOfRig", parent = "Column1", placeholderText = "Character Name/IDCode")
 mc.showWindow()
-
-#loadUI()
-#rigName = "" #rN() #sets rig name as a variable using a function. #doesn't work?
 
 def rN(): #Rig Name
     userInput = mc.textField("NameOfRig", query = True, text = True)
@@ -41,28 +35,21 @@ def createJoints():
     print "making joints"
     CreateDictionaries("_jnt_")
 
-####Scripting####
 def CreateDictionaries(function):
     sides = ["L", "R"]    
     axis = ["X", "Y", "Z"]
     locScale = 10
     offset = 1
 
-    for side in sides:
-        #Re-setting offset side
+    for side in sides: #runs the whole dictionary script twice, once with side set to "L" once again with "R"
         if side == "R":
-            offset = -1
-        
-        if function == "_Loc_" and side == "L":
-            createSpine()
-        
+            offset = -1        
+
         clavicalParent = rN()+ function + "SPINE_"+str(mc.intField(spineCount, query = True, value = True) - 2)
         hipParent = rN()+ function + "ROOT"
         
-        #Dictionary of details for thumb joints. <<dictionary Key:[Coordinates (needs input), "Limb", "Name of this joint", "Name of the parent joint"]>>
-        
-        ##HELP## #Set up dictionaries outside Create Locators function so both create locators and create Joints functions can call the data inside.
-        
+        #Dictionary of details for all points. <<dictionary Key:[Coordinates (needs input), "Limb", "Name of this joint", "Name of the parent joint"]>>
+
         #Arm joint dictionary.
         dictArmArray = [
         {"claviclePos":[(12.3*offset,148, -1.4), "Arm", "Clavicle", clavicalParent]},
@@ -134,13 +121,29 @@ def CreateDictionaries(function):
             spawnJoints(dictionaryArray, side, function)
         
         mc.select(rN() + "_Loc_" + "Master")
-        
             
-def spawnLocators(dictArray, side, function):
+def spawnLocators(dictArray, side, function):            
+    if function == "_Loc_" and side == "L": #Only run this once. 
+        if mc.objExists(rN()+"_Loc_Master"):
+            print 'Loc_Master already exists.'
+        else:
+            baseGroup = mc.group(em = True, name = rN() + "_Loc_Master")
+            mc.scale(1,1,1, baseGroup)
+            root = mc.spaceLocator(n = rN()+"_Loc_ROOT")
+            mc.move(0,95,2, rN()+"_Loc_ROOT")
+            mc.parent(root, rN()+"_Loc_Master") 
+            for i in range (0, mc.intField(spineCount, query = True, value = True)):
+                spine = mc.spaceLocator(n = rN()+"_Loc_SPINE_" + str(i))
+                if i == 0:
+                    mc.parent(spine, rN()+"_Loc_ROOT")            
+                else:
+                    mc.parent(spine, rN()+"_Loc_SPINE_"+str(i-1))
+                mc.scale(1,1,1, spine)
+                mc.move(0, 110 + (15 * i), 2, spine)              
+    
     for dictionary in dictArray:
         for dict in dictionary:
-            for key, v in dict.items():
-                
+            for key, v in dict.items():                
                 jntloc = mc.spaceLocator(n = rN() + function + v[1] + "_" + side + "_" + v[2])                
                 mc.move(v[0][0],v[0][1],v[0][2], jntloc)
                  
@@ -151,71 +154,31 @@ def spawnLocators(dictArray, side, function):
                 else:                    
                     mc.parent(jntloc, rN()+ function + "ROOT")
 
-def createSpine():
-    if mc.objExists(rN()+"_Loc_Master"):
-        print 'Loc_Master already exists.'
-    else:
-        baseGroup = mc.group(em = True, name = rN() + "_Loc_Master")
-        mc.scale(1,1,1, baseGroup)
-        root = mc.spaceLocator(n = rN()+"_Loc_ROOT")
-        mc.move(0,95,2, rN()+"_Loc_ROOT")
-        mc.parent(root, rN()+"_Loc_Master")    
-    
-        for i in range (0, mc.intField(spineCount, query = True, value = True)):
-            spine = mc.spaceLocator(n = rN()+"_Loc_SPINE_" + str(i))
-            if i == 0:
-                mc.parent(spine, rN()+"_Loc_ROOT")            
-            else:
-                mc.parent(spine, rN()+"_Loc_SPINE_"+str(i-1))
-            mc.scale(1,1,1, spine)
-            mc.move(0, 110 + (15 * i), 2, spine)
-
-def SetScale(component, axis):
-    for i in axis:
-        mc.setAttr(component + ".localScale" + i, locScale)
-
-####Delete####
-def deleteLocators():
-    nodes = mc.ls(rN()+"_Loc_*")
-    mc.delete(nodes)
-
-def deleteJoints():
-    nodes = mc.ls(rN()+"_jnt_*")
-    mc.delete(nodes)
-
 def spawnJoints(dictArray, side, function):
     rigSwitch = ["_IK", "_FK", "_Bind"]
     if mc.objExists(rN()+"_jnt_GRP"):
         print "Rig already exists"
     else:
-        jointGRP = mc.group(em = True, name = rN()+"_jnt_GRP") #Creates joint group
-        
+        jointGRP = mc.group(em = True, name = rN()+"_jnt_GRP") #Creates joint group        
         #defines locations of all the spine locators
         root = mc.ls("*_Loc_ROOT")
         allSpines = mc.ls("*_Loc_SPINE*", type = "locator")
-        spine = mc.listRelatives(*allSpines, p = True, f= True)
-        
+        spine = mc.listRelatives(*allSpines, p = True, f= True)        
         #create spine joints based on locations of spine locators.
         rootPos = mc.xform(root, q = True, t = True, ws = True)
         rootJoint = mc.joint(radius = 4, p = rootPos, name = rN()+ function + "ROOT")        
         for i, s in enumerate(spine):
             pos = mc.xform(s, q = True, t = True, ws = True)
             j = mc.joint(radius = 4, p = pos, name = rN()+ function + "SPINE_"+str(i+1))
-    print side
     for switch in rigSwitch:
         for dictionary in dictArray:
             for dict in dictionary:
-                for key, v in dict.items():
-                    
+                for key, v in dict.items():                    
                     #locPos = mc.translate(rN() + "_Loc_" + v[1] + "_" + side + "_" + v[2], joint) ##HELP## #Define the location of the associated locator
-                    #print locPos #print said location
-                    
+                    #print locPos #print said location                    
                     joint = mc.joint(radius = 4, n = rN() + "_jnt_" + v[1] + "_" + side + "_" + v[2] + switch, position = v[0]) #Create a joint at the location of the associated locator.
-
                     #mc.move(rN() + "_Loc_" + v[1] + "_" + side + "_" + v[2], joint)
                     #print key                        
-                        #print rN()+"_jnt_"+ v[1] + "_" + side + "_" + v[3] + switch
-                    
                     if key != "claviclePos" and key != "hipPos":
                         mc.parent(joint, rN()+"_jnt_GRP") ##HELP## Why do I have to parent the joint to something else for this to work?
                         mc.parent(joint, rN()+"_jnt_"+ v[1] + "_" + side + "_" + v[3] + switch)
@@ -226,4 +189,23 @@ def spawnJoints(dictArray, side, function):
                         mc.parent(joint, rN()+"_jnt_SPINE_"+str(mc.intField(spineCount, query = True, value = True) - 1))
                     else:
                         mc.parent(joint, rN()+"_jnt_ROOT")
-                    
+                        
+####Delete####
+def deleteLocators():
+    nodes = mc.ls(rN()+"_Loc_*")
+    mc.delete(nodes)
+
+def deleteJoints():
+    nodes = mc.ls(rN()+"_jnt_*")
+    mc.delete(nodes)
+
+def SetScale(component, axis): #Currently unused.
+    for i in axis:
+        mc.setAttr(component + ".localScale" + i, locScale)
+        
+def HowthefuckdoImakeControls():
+    print "scream"
+    HowdoIbindshit()
+
+def HowdoIbindshit():
+    print "cry"
