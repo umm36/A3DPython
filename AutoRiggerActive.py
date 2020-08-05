@@ -34,6 +34,11 @@ def createLocators():
 def createJoints():
     print "making joints"
     CreateDictionaries("_jnt_")
+    #reparentBones()
+    
+def createControls():
+    print "making joints"
+    CreateDictionaries("_ctl_")
 
 def CreateDictionaries(function):
     sides = ["L", "R"]    
@@ -105,7 +110,7 @@ def CreateDictionaries(function):
         {"toesPos":[(17*offset, 2.7, 7.8), "Leg", "Toes", "Ankle"]}
         ]
         
-        dictionaryArray = [
+        fullDictArray = [
         dictArmArray,
         dictThumbJnts,
         dictIndexJnts,
@@ -113,12 +118,27 @@ def CreateDictionaries(function):
         dictRingJnts,
         dictPinkyJnts,
         dictLegJnts
+        ]        
+        limbDictArray = [
+        dictArmArray,
+        dictLegJnts
+        ]        
+        handDictArray = [
+        dictThumbJnts,
+        dictIndexJnts,
+        dictMiddleJnts,
+        dictRingJnts,
+        dictPinkyJnts
         ]
+        
         if function == "_Loc_":
-            spawnLocators(dictionaryArray, side, function)
+            spawnLocators(fullDictArray, side, function)
         elif function == "_jnt_":
             print "Making joints for the " + side + " side."
-            spawnJoints(dictionaryArray, side, function)
+            spawnJoints(limbDictArray, side, function)
+            spawnHandJoints(handDictArray, side, function)
+        elif function == "_ctrl_":
+            BuildControls(fullDictArray, side, function)
         
         mc.select(rN() + "_Loc_" + "Master")
             
@@ -159,29 +179,38 @@ def spawnJoints(dictArray, side, function):
     if mc.objExists(rN()+"_jnt_GRP"):
         print "Rig already exists"
     else:
+        #spawn spine
+        
+        ##Help##
+        #How do I iterate over all the joints, read the name and position to spawn in the joints while aiming at the next joint in the list?
+        
         jointGRP = mc.group(em = True, name = rN()+"_jnt_GRP") #Creates joint group        
         #defines locations of all the spine locators
         root = mc.ls("*_Loc_ROOT")
         allSpines = mc.ls("*_Loc_SPINE*", type = "locator")
-        spine = mc.listRelatives(*allSpines, p = True, f= True)        
+        spine = mc.listRelatives(*allSpines, parent = True, fullPath= True)        
         #create spine joints based on locations of spine locators.
         rootPos = mc.xform(root, q = True, t = True, ws = True)
-        rootJoint = mc.joint(radius = 4, p = rootPos, name = rN()+ function + "ROOT")        
+        rootJoint = mc.joint(radius = 4, position = rootPos, name = rN()+ function + "ROOT")        
         for i, s in enumerate(spine):
             pos = mc.xform(s, q = True, t = True, ws = True)
-            j = mc.joint(radius = 4, p = pos, name = rN()+ function + "SPINE_"+str(i+1))
-    for switch in rigSwitch:
-        for dictionary in dictArray:
+            j = mc.joint(radius = 4, position = pos, name = rN()+ function + "SPINE_"+str(i+1))
+    
+    #spawn limbs
+    for switch in rigSwitch: #for FK, IK and Bind rigs:
+        for dictionary in dictArray: 
             for dict in dictionary:
-                for key, v in dict.items():                    
-                    #locPos = mc.translate(rN() + "_Loc_" + v[1] + "_" + side + "_" + v[2], joint) ##HELP## #Define the location of the associated locator
-                    #print locPos #print said location                    
-                    joint = mc.joint(radius = 4, n = rN() + "_jnt_" + v[1] + "_" + side + "_" + v[2] + switch, position = v[0]) #Create a joint at the location of the associated locator.
+                for key, v in dict.items():     
+                    #locPos = mc.translate(rN() + "_Loc_" + v[1] + "_" + side + "_" + v[2], joint) ##HELP## #How do I define the location of the associated locator (we went over this, but I forgot)
+                    #print locPos #print said location     
+                    
+                    joint = mc.joint(radius = 4, n = rN() + "_jnt_" + v[1] + "_" + side + "_" + v[2] + switch, position = v[0]) ####Create a joint at the location of the associated locator.
                     #mc.move(rN() + "_Loc_" + v[1] + "_" + side + "_" + v[2], joint)
-                    #print key                        
+                    #print key
                     if key != "claviclePos" and key != "hipPos":
                         mc.parent(joint, rN()+"_jnt_GRP") ##HELP## Why do I have to parent the joint to something else for this to work?
                         mc.parent(joint, rN()+"_jnt_"+ v[1] + "_" + side + "_" + v[3] + switch)
+                        #print "blah"
                     elif key == "claviclePos":
                         #print "I am " + joint + " of " + key                        
                         #print "I want to bind to " + rN()+"_jnt_"+ v[1] + "_" + side + "_" + v[3]                           
@@ -189,7 +218,27 @@ def spawnJoints(dictArray, side, function):
                         mc.parent(joint, rN()+"_jnt_SPINE_"+str(mc.intField(spineCount, query = True, value = True) - 1))
                     else:
                         mc.parent(joint, rN()+"_jnt_ROOT")
-                        
+
+def spawnHandJoints(dict, side, function):
+    print "Making hands bones"
+    wrists = mc.ls("*_Wrist", type = "locator")
+    print wrists
+    for root in wrists:
+        for key, v in dict.items():
+            print "hi"    
+    
+    ##Help##
+    #What process do I follow to get each finger spawned in a chain and parent the base to the wrist?
+    
+    
+    
+    
+    
+    
+    
+def reparentBones():
+    print "hi"
+
 ####Delete####
 def deleteLocators():
     nodes = mc.ls(rN()+"_Loc_*")
@@ -203,9 +252,9 @@ def SetScale(component, axis): #Currently unused.
     for i in axis:
         mc.setAttr(component + ".localScale" + i, locScale)
         
-def HowthefuckdoImakeControls():
-    print "scream"
-    HowdoIbindshit()
-
+def BuildControls(dictArray, side, function):
+    print "sob"
+    ##HELP## #How do I edit curves to make them look fancy so I can align them to the joints?
+    
 def HowdoIbindshit():
     print "cry"
