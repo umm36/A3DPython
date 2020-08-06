@@ -228,7 +228,7 @@ def spawnHandJoints(dict, side, function):
     wrists = mc.ls("*_Wrist", type = "locator")
     print wrists
     for root in wrists:
-        for key, v in dict:
+        for key, v in dict.items():
             print "hi"    
     
     ##Help##
