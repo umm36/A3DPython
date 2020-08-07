@@ -23,6 +23,9 @@ mc.text("Rig Name", l = "Rig Name")
 mc.textField("NameOfRig", parent = "Column1", placeholderText = "Character Name/IDCode")
 mc.showWindow()
 
+locList = []
+parentDict = {}
+
 def rN(): #Rig Name
     userInput = mc.textField("NameOfRig", query = True, text = True)
     return str(userInput)
@@ -140,12 +143,12 @@ def CreateDictionaries(function):
         elif function == "_ctrl_":
             BuildControls(fullDictArray, side, function)
         
-        mc.select(rN() + "_Loc_" + "Master")
+        mc.select(clear = True)
             
 def spawnLocators(dictArray, side, function):            
     if function == "_Loc_" and side == "L": #Only run this once. 
         if mc.objExists(rN()+"_Loc_Master"):
-            print 'Loc_Master already exists.'
+            print '_Loc_Master already exists.'
         else:
             baseGroup = mc.group(em = True, name = rN() + "_Loc_Master")
             mc.scale(1,1,1, baseGroup)
@@ -159,14 +162,12 @@ def spawnLocators(dictArray, side, function):
                 else:
                     mc.parent(spine, rN()+"_Loc_SPINE_"+str(i-1))
                 mc.scale(1,1,1, spine)
-                mc.move(0, 110 + (15 * i), 2, spine)              
-    
+                mc.move(0, 110 + (15 * i), 2, spine)
     for dictionary in dictArray:
         for dict in dictionary:
             for key, v in dict.items():                
                 jntloc = mc.spaceLocator(n = rN() + function + v[1] + "_" + side + "_" + v[2])                
                 mc.move(v[0][0],v[0][1],v[0][2], jntloc)
-                 
                 if key != "claviclePos" and key != "hipPos":
                     mc.parent(jntloc , rN()+ function + v[1] + "_" + side + "_" + v[3])
                 elif key == "claviclePos":
@@ -178,19 +179,17 @@ def spawnJoints(dictArray, side, function):
     rigSwitch = ["_IK", "_FK", "_Bind"]
     if mc.objExists(rN()+"_jnt_GRP"):
         print "Rig already exists"
-    else:
+    elif mc.objExists(rN()+"_Loc_Master"):
         #spawn spine
+        jointGRP = mc.group(em = True, name = rN()+"_jnt_GRP") #Creates joint group
         
+        print "\n----------------"
         
-        ##Help##
-        #How do I iterate over all the joints, read the name and position to spawn in the joints while aiming at the next joint in the list?
-        
-        allLocs = mc.listRelatives("*_Loc_Arm*", allDescendents = True, type = "locator")
-        print allLocs
-        
-        
-        
-        jointGRP = mc.group(em = True, name = rN()+"_jnt_GRP") #Creates joint group        
+        for i in mc.listRelatives("*_Loc_Arm*" and "*_Loc_Leg*", allDescendents = True, type = "locator"):
+            locList.append(mc.pickWalk(i, direction = "Up")[0])
+            print i
+        mc.select(clear = True)
+        print "---------------------"
         #defines locations of all the spine locators
         root = mc.ls("*_Loc_ROOT")
         allSpines = mc.ls("*_Loc_SPINE*", type = "locator")
@@ -201,12 +200,60 @@ def spawnJoints(dictArray, side, function):
         for i, s in enumerate(spine):
             pos = mc.xform(s, q = True, t = True, ws = True)
             j = mc.joint(radius = 4, position = pos, name = rN()+ function + "SPINE_"+str(i+1))
-    
+        
+        for rig in rigSwitch:
+            for counter, loc in enumerate(locList):
+                if ["Arm", "Leg"] in loc:
+                    print"\n-----------------"
+                    print loc
+                    jParent = mc.pickWalk(loc, direction = "Up")[0].replace("_Loc_","_jnt_")+rig
+                    print jParent
+                    print"-----------------"
+                    '''
+                    if counter + 1 < len(locList):
+                        jParent = mc.pickWalk(loc, direction = "Up")[0].replace("_Loc_","_jnt_")+rig
+                        pos = mc.xform(loc, query = True, translation = True, worldSpace = True)
+                        jointName = loc.replace("_Loc_","_jnt_")
+                        #print loc.replace("_Loc_","_jnt_")
+                        mc.select(clear = True)
+                        jnt = mc.joint(name = jointName + rig, radius = 4)
+                        mc.xform(jnt, translation = pos)
+                        conDelete = mc.aimConstraint(locList[counter+1], jnt)
+                        if jParent != rN() + "_jnt_Master" + rig:
+                            print jParent, "______is parenting under_______", jnt
+                            parentDict.update({jParent : jnt})
+                        else:
+                            print "AHHHHHHHHHHHHHH"
+                        mc.delete(conDelete)
+                        #print loc
+                    elif counter == len(locList)-1:
+                        jParent = mc.pickWalk(loc, direction = "Up")[0].replace("_Loc_","_jnt_")+rig
+                        pos = mc.xform(loc, query = True, translation = True, worldSpace = True)
+                        
+                        jointName = loc.replace("_Loc_","_jnt_")
+                        mc.select(clear = True)
+                        jnt = mc.joint(name = jointName + rig, radius = 4)
+                        mc.xform(jnt, translation = pos)
+                        parentDict.update({jParent : jnt})
+                    '''
+        for key, value in parentDict.items():
+            mc.parent(value, "humanBody", absolute = True)
+            mc.parent(value, key, absolute = True)
+            mc.select(clear = True)
+            print rN()+"_jnt_SPINE_"+str(mc.intField(spineCount, query = True, value = True) - 2)
+            if "Clavicle" in key:
+                mc.parent(value, rN()+"_jnt_SPINE_"+str(mc.intField(spineCount, query = True, value = True) - 2))
+            elif "Hip" in key:
+                mc.parent(value, rN()+"_jnt_ROOT")
+
+        '''
+
+        
     #spawn limbs
     for switch in rigSwitch: #for FK, IK and Bind rigs:
         for dictionary in dictArray: 
             for dict in dictionary:
-                for key, v in dict.items():     
+                for key, v in dict.items():
                     
                     locPos = mc.xform(rN() + "_Loc_" + v[1] + "_" + side + "_" + v[2], q = True, t = True, ws = True) ##HELP## #How do I define the location of the associated locator (we went over this, but I forgot)
                     #print locPos #print said location     
@@ -222,13 +269,13 @@ def spawnJoints(dictArray, side, function):
                         mc.parent(joint, rN()+"_jnt_SPINE_"+str(mc.intField(spineCount, query = True, value = True) - 1))
                     else:
                         mc.parent(joint, rN()+"_jnt_ROOT")
-
+        '''
 def spawnHandJoints(dict, side, function):
     print "Making hands bones"
     wrists = mc.ls("*_Wrist", type = "locator")
     print wrists
     for root in wrists:
-        for key, v in dict:
+        for key, v in dict.items():
             print "hi"    
     
     ##Help##
