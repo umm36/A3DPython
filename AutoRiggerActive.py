@@ -184,7 +184,7 @@ def spawnLocators(dictArray, side, function):
                     
 ##############################################################################################################################
 def spawnJoints(function):
-    rigSwitch = ["_IK", "_FK", "_Bind"]                                                             #defines the types of rigs
+    rigSwitch = ["_IK", "_FK", "_Bind"]#### Add "_Core" or add _Bind to hands and spine?            #defines the types of rigs
     if mc.objExists(rN()+"_jnt_GRP"):                                                               #if the joint group already exists
         print "Rig already exists"                                                                  #do nothing
     elif mc.objExists(rN()+"_Loc_Master"):                                                          #otherwise if the loc master group works, 
@@ -230,51 +230,46 @@ def spawnJoints(function):
 
 def makeLimbs(jointList, rig):                                                                      
     for counter, loc in enumerate(jointList):                                                       #for each thing and location in the locator list
-        if counter + 1 < len(jointList):                                                            #if the thing isn't the last thing in the list:
             jParent = mc.pickWalk(loc, direction = "Up")[0].replace("_Loc_","_jnt_") + rig          #parent is whatever the locator is parented to, but joint, rather than locator, and add the rig.           
             pos = mc.xform(loc, query = True, translation = True, worldSpace = True)                #get the position of the locator
             jointName = loc.replace("_Loc_","_jnt_")                                                #set the name of the joint
             mc.select(clear = True)                                                                 #clear selection.
             jnt = mc.joint(name = jointName + rig, radius = 4)                                      #creates jnt as a joint with the correct name and a radius of 4.
             mc.xform(jnt, translation = pos)                                                        #move the joint to the position it belongs.
-            conDelete = mc.aimConstraint(locListArms[counter+1], jnt)                               #creates an aim constraint from the joint just made looking at the next item in the list.
+            if "Wrist" not in jnt and "Toes" not in jnt:
+                conDelete = mc.aimConstraint(locListArms[counter+1], jnt)                           #creates an aim constraint from the joint just made looking at the next item in the list.
+                mc.delete(conDelete)                                                                #delete the constraint
             parentDict.update({jnt: jParent})                                                       #add the parent and the joint to a dictionary
-            mc.delete(conDelete)                                                                    #delete the constraint
-
-        elif counter == len(locListArms)-1:                                                         #if this IS the last thing in the list                
-            jParent = mc.pickWalk(loc, direction = "Up")[0].replace("_Loc_","_jnt_") + rig          #do
-            pos = mc.xform(loc, query = True, translation = True, worldSpace = True)                #the
-            jointName = loc.replace("_Loc_","_jnt_")                                                #same
-            mc.select(clear = True)                                                                 #thing
-            jnt = mc.joint(name = rN()+ jointName + rig, radius = 4)                                #without
-            mc.xform(jnt, translation = pos)                                                        #the
-            parentDict.update({jnt: jParent})                                                       #constraint
             mc.select(clear = True)
 ############################################################################################################################################
 
 
 def makeHands(handDictionary):
     for i, loc in enumerate(handDictionary):                                                        #for each locator in LocListHands,
-        if i + 1 < len(handDictionary):                                                             #if the thing isn't the last thing in the list:
-            jointName = loc.replace("_Loc_","_jnt_")
-            pos = mc.xform(loc, query = True, translation = True, worldSpace = True)
-            jnt = mc.joint(name = jointName, radius = 4)                                            #spawn a joint based on the name,
-            mc.xform(jnt, translation = pos)
-            mc.select(clear = True)
-            conDelete = mc.aimConstraint(handDictionary[i+1], jnt)                                  #creates an aim constraint from the joint just made looking at the next item in the list.
-            mc.delete(conDelete)                                                                    #delete the constraint
-            #jParent = mc.pickWalk(loc, direction = "Up")[0].replace("_Loc_","_jnt_")
-            #parentDict.update({jnt: jParent})                                                       #add the parent and the joint to a dictionary          
+        jointName = loc.replace("_Loc_","_jnt_")
+        pos = mc.xform(loc, query = True, translation = True, worldSpace = True)
+        jnt = mc.joint(name = jointName, radius = 4)                                            #spawn a joint based on the name,
+        mc.xform(jnt, translation = pos)
+        mc.select(clear = True)
+        if "Tip" not in jnt:
+            print "oops"
+            #conDelete = mc.aimConstraint(handDictionary[i+1], jnt)                                  #creates an aim constraint from the joint just made looking at the next item in the list.
+            #mc.delete(conDelete)                                                                   #delete the constraint
+        else:
+            print "oops"
+            #target = mc.pickWalk(loc, direction = "Up")[0] ##HELP## #WHY DOES THIS BREAK SHIT?!?!?!??!?!
+            #print jnt + " aiming at " + target
+            #conDelete = mc.aimConstraint(target, jnt)                                  #creates an aim constraint from the joint just made looking at the next item in the list.
+            #mc.delete(conDelete)                                                                   #delete the constraint
         
-        elif i == len(handDictionary)-1:
-            #jParent = mc.pickWalk(loc, direction = "Up")[0].replace("_Loc_","_jnt_")
-            jointName = loc.replace("_Loc_","_jnt_")
-            pos = mc.xform(loc, query = True, translation = True, worldSpace = True)
-            jnt = mc.joint(name = jointName, radius = 4)                                            #spawn a joint based on the name,
-            mc.xform(jnt, translation = pos)
-            mc.select(clear = True)
-        
-        for i, "base" in enumerate(handDicionary):
+        #print jnt +"_ is parenting under _"+jParent
+        #if "Base" in jnt:
+        #    jParent = mc.pickWalk(loc, direction = "Up")[0].replace("_Loc_","_jnt_") + "_Bind"
+        #else:
+        #    jParent = mc.pickWalk(loc, direction = "Up")[0].replace("_Loc_","_jnt_")
+        #parentDict.update({jnt: jParent})                                                       #add the parent and the joint to a dictionary          
+
+        #for i, "base" in enumerate(handDictionary):
             
         
             
