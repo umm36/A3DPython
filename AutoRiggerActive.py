@@ -75,7 +75,7 @@ def CreateDictionaries(function):
             dictThumbJnts = [
             {"thumbBasePos":[(41.5*offset, 93, 7.2), "Hand", "ThumbBase", "Wrist"]},
             {"thumb1Pos":[(40.8*offset, 89.7, 9.4), "Hand", "Thumb1", "ThumbBase"]},
-            {"thumb2Pos":[(40.4*offset, 85.6, 11), "Hand", "Thumb2", "Thumb1"]}
+            {"thumb2Pos":[(40.4*offset, 85.6, 11), "Hand", "ThumbTip", "Thumb1"]}
             ]
             
             #Index finger joints
@@ -83,7 +83,7 @@ def CreateDictionaries(function):
             {"indexBasePos":[(43.9*offset, 92.6, 5.3), "Hand", "IndexFingerBase", "Wrist"]},
             {"index1Pos":[(45.8*offset, 84.4, 8.7), "Hand", "IndexFinger1", "IndexFingerBase"]},
             {"index2Pos":[(46*offset, 81.3, 9.6), "Hand", "IndexFinger2", "IndexFinger1"]},
-            {"index3Pos":[(45.3*offset, 78.3, 10.9), "Hand", "IndexFinger3", "IndexFinger2"]}
+            {"index3Pos":[(45.3*offset, 78.3, 10.9), "Hand", "IndexFingerTip", "IndexFinger2"]}
             ]
             
             #Middle finger joints
@@ -91,7 +91,7 @@ def CreateDictionaries(function):
             {"middleBasePos":[(44.7*offset, 92.1, 3.6), "Hand", "MiddleFingerBase", "Wrist"]},
             {"middle1Pos":[(46.5*offset, 84.2, 5.7), "Hand", "MiddleFinger1", "MiddleFingerBase"]},
             {"middle2Pos":[(46.8*offset, 80.1, 6.6), "Hand", "MiddleFinger2", "MiddleFinger1"]},
-            {"middle3Pos":[(45.7*offset, 76.2, 7.8), "Hand", "MiddleFinger3", "MiddleFinger2"]}
+            {"middle3Pos":[(45.7*offset, 76.2, 7.8), "Hand", "MiddleFingerTip", "MiddleFinger2"]}
             ]
             
             #Ring finger joints
@@ -99,7 +99,7 @@ def CreateDictionaries(function):
             {"ringBasePos":[(44.2*offset, 91.7, 2.4), "Hand", "RingFingerBase", "Wrist"]},
             {"ring1Pos":[(46*offset, 83.4, 3.1), "Hand", "RingFinger1", "RingFingerBase"]},
             {"ring2Pos":[(45.9*offset, 79.8, 3.7), "Hand", "RingFinger2", "RingFinger1"]},
-            {"ring3Pos":[(44.5*offset, 75.6, 5), "Hand", "RingFinger3", "RingFinger2"]}
+            {"ring3Pos":[(44.5*offset, 75.6, 5), "Hand", "RingFingerTip", "RingFinger2"]}
             ]
             
             #Pinky finger joints
@@ -107,7 +107,7 @@ def CreateDictionaries(function):
             {"pinkyBasePos":[(42.9*offset, 91.1, 0.7), "Hand", "PinkyFingerBase", "Wrist"]},
             {"pinky1Pos":[(44.4*offset, 83.5, 0.7), "Hand", "PinkyFinger1", "PinkyFingerBase"]},
             {"pinky2Pos":[(44*offset, 80.1, 0.8), "Hand", "PinkyFinger2", "PinkyFinger1"]},
-            {"pinky3Pos":[(43.1*offset, 77.7, 1.3), "Hand", "PinkyFinger3", "PinkyFinger2"]}
+            {"pinky3Pos":[(43.1*offset, 77.7, 1.3), "Hand", "PinkyFingerTip", "PinkyFinger2"]}
             ]
             
             #Arm joint dictionary
@@ -194,8 +194,9 @@ def spawnJoints(function):
             locListArms.append(mc.pickWalk(armJnts, direction = "Up")[0])                           #add it to the list of arm joints
         for legJnts in mc.listRelatives("*_Loc_Leg*", type = "locator"):                            #Likewise for Leg
             locListLegs.append(mc.pickWalk(legJnts, direction = "Up")[0])                           #""
-        for handJnts in mc.listRelatives("*_Loc_Hand*", type = "locator"):                          #"" for Hand
-            locListHands.append(mc.pickWalk(handJnts, direction = "Up")[0])                         #""
+        for handJnts in mc.listRelatives("*_Loc_Hand*", type = "locator"):                          #for every object that has Loc_Hand in it:
+            locListHands.append(mc.pickWalk(handJnts, direction = "Up")[0])                         #add it to the list of hand joints
+
 ############################################################################################################################################
         ####Build Spine
         mc.select(clear = True)                                                                     #clear selection.
@@ -239,8 +240,7 @@ def makeLimbs(jointList, rig):
             conDelete = mc.aimConstraint(locListArms[counter+1], jnt)                               #creates an aim constraint from the joint just made looking at the next item in the list.
             parentDict.update({jnt: jParent})                                                       #add the parent and the joint to a dictionary
             mc.delete(conDelete)                                                                    #delete the constraint
-            #print jParent, jointName
-            #print counter
+
         elif counter == len(locListArms)-1:                                                         #if this IS the last thing in the list                
             jParent = mc.pickWalk(loc, direction = "Up")[0].replace("_Loc_","_jnt_") + rig          #do
             pos = mc.xform(loc, query = True, translation = True, worldSpace = True)                #the
@@ -249,20 +249,45 @@ def makeLimbs(jointList, rig):
             jnt = mc.joint(name = rN()+ jointName + rig, radius = 4)                                #without
             mc.xform(jnt, translation = pos)                                                        #the
             parentDict.update({jnt: jParent})                                                       #constraint
+            mc.select(clear = True)
 ############################################################################################################################################
 
 
 def makeHands(handDictionary):
-    #for each locator in handDictionary,
-    #spawn a joint based on the name,
-    #make and delete an aim constraint to the next locator to get correct alignment.
-    #if locator's parent is wrist, (or if finger is "base")
-    #parent joint to "wrist"
-    #otherwise if
-    #parent each joint to the associated join of the locators parent
+    for i, loc in enumerate(handDictionary):                                                        #for each locator in LocListHands,
+        if i + 1 < len(handDictionary):                                                             #if the thing isn't the last thing in the list:
+            jointName = loc.replace("_Loc_","_jnt_")
+            pos = mc.xform(loc, query = True, translation = True, worldSpace = True)
+            jnt = mc.joint(name = jointName, radius = 4)                                            #spawn a joint based on the name,
+            mc.xform(jnt, translation = pos)
+            mc.select(clear = True)
+            conDelete = mc.aimConstraint(handDictionary[i+1], jnt)                                  #creates an aim constraint from the joint just made looking at the next item in the list.
+            mc.delete(conDelete)                                                                    #delete the constraint
+            #jParent = mc.pickWalk(loc, direction = "Up")[0].replace("_Loc_","_jnt_")
+            #parentDict.update({jnt: jParent})                                                       #add the parent and the joint to a dictionary          
+        
+        elif i == len(handDictionary)-1:
+            #jParent = mc.pickWalk(loc, direction = "Up")[0].replace("_Loc_","_jnt_")
+            jointName = loc.replace("_Loc_","_jnt_")
+            pos = mc.xform(loc, query = True, translation = True, worldSpace = True)
+            jnt = mc.joint(name = jointName, radius = 4)                                            #spawn a joint based on the name,
+            mc.xform(jnt, translation = pos)
+            mc.select(clear = True)
+        
+        for i, "base" in enumerate(handDicionary):
+            
+        
+            
+            
+                                                                                                    #make and delete an aim constraint to the next locator to get correct alignment.
+                                                                                                    #if locator's parent is wrist, (or if finger is "base")
+                                                                                                    #parent joint to "wrist"
+                                                                                                    #otherwise if
+                                                                                                    #parent each joint to the associated join of the locators parent
+
     
-    
-    
+
+
     print "Making hands bones"
     wrists = mc.ls("*_Wrist", type = "locator")
     print wrists
@@ -272,16 +297,25 @@ def makeHands(handDictionary):
     
     ##Help##
     #What process do I follow to get each finger spawned in a chain and parent the base to the wrist?
-    
+
 
 ####Delete####
 def deleteLocators():
     nodes = mc.ls(rN()+"_Loc_*")
     mc.delete(nodes)
 
+
+
 def deleteJoints():
     nodes = mc.ls(rN()+"_jnt_*")
     mc.delete(nodes)
+    locListArms = []
+    locListLegs = []
+    locListHands = []
+    
+    print locListArms, locListLegs, locListHands
+
+
 
 def SetScale(component, axis): #Currently unused.
     for i in axis:
