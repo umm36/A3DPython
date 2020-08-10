@@ -17,7 +17,7 @@ mc.text("Finger Joints", l = "Finger Joints")
 fingerJoints = mc.intField(minValue = 1, maxValue = 10, value = 3)
 
 mc.button(l = "GenerateControls", w = 175, c = "BuildControls()")
-mc.button(l = "Bind Skin", w = 175, c = "HowdoIbindshit()")
+mc.button(l = "Delete Controls", w = 175, c = "DeleteControls()")
 
 mc.text("Rig Name", l = "Rig Name")    
 mc.textField("NameOfRig", parent = "Column1", placeholderText = "Character Name/IDCode")
@@ -68,7 +68,8 @@ def CreateDictionaries(function):
             {"claviclePos":[(12.3*offset,148, -1.4), "Arm", "Clavicle", clavicalParent]},
             {"shoulderPos":[(19.8*offset,143, -1.4), "Arm", "Shoulder", "Clavicle"]},
             {"elbowPos":[(30.3*offset,117.6, -2.6), "Arm", "Elbow", "Shoulder"]},
-            {"wristPos":[(43*offset,93.7, 3.3), "Arm", "Wrist", "Elbow"]}
+            {"wristPos":[(43*offset,93.7, 3.3), "Arm", "Wrist", "Elbow"]},
+            {"armEndPos":[(43.7*offset,89.3, 3.5), "Arm", "ZZZ", "Wrist"]}
             ]
             
             #Thumb finger joints
@@ -76,7 +77,7 @@ def CreateDictionaries(function):
             {"thumbBasePos":[(41.5*offset, 93, 7.2), "Hand", "ThumbBase", "Wrist"]},
             {"thumb1Pos":[(40.8*offset, 89.7, 9.4), "Hand", "Thumb1", "ThumbBase"]},
             {"thumb2Pos":[(40.4*offset, 85.6, 11), "Hand", "Thumb2", "Thumb1"]},
-            {"thumb2Pos":[(39.8*offset, 83.1, 12.2), "Hand", "ThumbTip", "Thumb1"]}
+            {"TumbTipPos":[(39.8*offset, 83.1, 12.2), "Hand", "ThumbTip", "Thumb2"]}
             ]
             
             #Index finger joints
@@ -85,7 +86,7 @@ def CreateDictionaries(function):
             {"index1Pos":[(45.8*offset, 84.4, 8.7), "Hand", "IndexFinger1", "IndexFingerBase"]},
             {"index2Pos":[(46*offset, 81.3, 9.6), "Hand", "IndexFinger2", "IndexFinger1"]},
             {"index3Pos":[(45.3*offset, 78.3, 10.9), "Hand", "IndexFinger3", "IndexFinger2"]},
-            {"index3Pos":[(44.3*offset, 76.7, 11.3), "Hand", "IndexFingerTip", "IndexFinger2"]}
+            {"indexTipPos":[(44.3*offset, 76.7, 11.3), "Hand", "IndexFingerTip", "IndexFinger3"]}
             ]
             
             #Middle finger joints
@@ -94,7 +95,7 @@ def CreateDictionaries(function):
             {"middle1Pos":[(46.5*offset, 84.2, 5.7), "Hand", "MiddleFinger1", "MiddleFingerBase"]},
             {"middle2Pos":[(46.8*offset, 80.1, 6.6), "Hand", "MiddleFinger2", "MiddleFinger1"]},
             {"middle3Pos":[(45.7*offset, 76.2, 7.8), "Hand", "MiddleFinger3", "MiddleFinger2"]},
-            {"middle2Pos":[(44.6*offset, 74.5, 8.6), "Hand", "MiddleFingerTip", "MiddleFinger1"]}
+            {"middleTipPos":[(44.6*offset, 74.5, 8.6), "Hand", "MiddleFingerTip", "MiddleFinger3"]}
             ]
             
             #Ring finger joints
@@ -103,7 +104,7 @@ def CreateDictionaries(function):
             {"ring1Pos":[(46*offset, 83.4, 3.1), "Hand", "RingFinger1", "RingFingerBase"]},
             {"ring2Pos":[(45.9*offset, 79.8, 3.7), "Hand", "RingFinger2", "RingFinger1"]},
             {"ring3Pos":[(44.5*offset, 75.6, 5), "Hand", "RingFinger3", "RingFinger2"]},
-            {"ring3Pos":[(43.5*offset, 74.2, 5.9), "Hand", "RingFingerTip", "RingFinger2"]}
+            {"ringTipPos":[(43.5*offset, 74.2, 5.9), "Hand", "RingFingerTip", "RingFinger3"]}
             ]
             
             #Pinky finger joints
@@ -112,7 +113,7 @@ def CreateDictionaries(function):
             {"pinky1Pos":[(44.4*offset, 83.5, 0.7), "Hand", "PinkyFinger1", "PinkyFingerBase"]},
             {"pinky2Pos":[(44*offset, 80.1, 0.8), "Hand", "PinkyFinger2", "PinkyFinger1"]},
             {"pinky3Pos":[(43.1*offset, 77.7, 1.3), "Hand", "PinkyFinger3", "PinkyFinger2"]},
-            {"pinky3Pos":[(42*offset, 76.1, 2.2), "Hand", "PinkyFingerTip", "PinkyFinger2"]}
+            {"pinkyTipPos":[(42*offset, 76.1, 2.2), "Hand", "PinkyFingerTip", "PinkyFinger3"]}
             ]
             
             #Arm joint dictionary
@@ -228,7 +229,7 @@ def spawnJoints(function):
                 mc.parent(key, rN()+"_jnt_SPINE_"+str(mc.intField(spineCount, query = True, value = True) - 1)) #parent it to the second to last spine joint.
             elif "Hip" in key:                                                                      #if the key has 'Hip' in it
                 mc.parent(key, rN()+"_jnt_ROOT")                                                    #parent it to the root joint.
-            elif "Tip" in key:                
+            elif "Tip" in key or "ZZZ" in key:                
                 mc.delete(key)
             else:                                                                                   #if it's not either of these,
                 mc.parent(key, "humanBody", absolute = True)                                        #"un-parent" it
@@ -242,9 +243,10 @@ def makeLimbs(jointList, rig):
             jointName = loc.replace("_Loc_","_jnt_")                                                #set the name of the joint
             mc.select(clear = True)                                                                 #clear selection.
             jnt = mc.joint(name = jointName + rig, radius = 4)                                      #creates jnt as a joint with the correct name and a radius of 4.
+            print jointName ##HELP## #Why does the list get generated alphabetically? I have to name the end of the arm ZZZ so it gets added AFTER the Wrist.
             mc.xform(jnt, translation = pos)                                                        #move the joint to the position it belongs.
-            if "Wrist" not in jnt and "Toes" not in jnt:
-                conDelete = mc.aimConstraint(locListArms[counter+1], jnt)                           #creates an aim constraint from the joint just made looking at the next item in the list.
+            if "ZZZ" not in jnt and "Toes" not in jnt:  ##HELP## #debug: #Replace "ZZZ" with "End"
+                conDelete = mc.aimConstraint(jointList[counter+1], jnt)                             #creates an aim constraint from the joint just made looking at the next item in the list.
                 mc.delete(conDelete)                                                                #delete the constraint
             parentDict.update({jnt: jParent})                                                       #add the parent and the joint to a dictionary
             mc.select(clear = True)
@@ -277,21 +279,29 @@ def deleteLocators():
 def deleteJoints():
     nodes = mc.ls(rN()+"_jnt_*")
     mc.delete(nodes)
-    locListArms = []
-    locListLegs = []
-    locListHands = []
-    
-    #print locListArms, locListLegs, locListHands
-
-
 
 def SetScale(component, axis): #Currently unused.
     for i in axis:
         mc.setAttr(component + ".localScale" + i, locScale)
         
-def BuildControls(dictArray, side, function):
-    print "sob"
-    ##HELP## #How do I edit curves to make them look fancy so I can align them to the joints?
+def BuildControls():
+    if mc.objExists(rN()+"Controls Group"):
+        print "Controls already generated for " + rN()
+    else:
+        CtrlGrp = mc.group(em = True, name = rN()+"Controls Group")
+        allJoints = mc.ls(rN()+"_jnt_*" + "*FK")
+        
+        for joint in allJoints:            
+            
+            jntPos = mc.xform(joint, query = True, translation = True, worldSpace = True)
+            jntRot = mc.xform(joint, query = True, rotation = True, worldSpace = True)
+            ctrl = mc.circle(r = 5, name = rN()+"_ctrl_bob")
+            mc.xform(ctrl, translation = jntPos, rotation = jntRot, worldSpace = True)
+            mc.rotate(0,90,0,ctrl, relative = True, componentSpace = True)
+            
     
-def HowdoIbindshit():
-    print "cry"
+    ##HELP## #How do I edit curves to make them look fancy so I can align them to the joints and colour them?
+    
+def DeleteControls():
+    nodes = mc.ls(rN()+"_ctrl*")
+    mc.delete(nodes)
