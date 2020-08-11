@@ -29,6 +29,7 @@ locListHands = []
 
 
 parentDict = {}
+jntParentDict = {}
 
 def rN(): #Rig Name
     userInput = mc.textField("NameOfRig", query = True, text = True)
@@ -69,7 +70,7 @@ def CreateDictionaries(function):
             {"shoulderPos":[(19.8*offset,143, -1.4), "Arm", "Shoulder", "Clavicle"]},
             {"elbowPos":[(30.3*offset,117.6, -2.6), "Arm", "Elbow", "Shoulder"]},
             {"wristPos":[(43*offset,93.7, 3.3), "Arm", "Wrist", "Elbow"]},
-            {"armEndPos":[(43.7*offset,89.3, 3.5), "Arm", "ZZZ", "Wrist"]}
+            {"armTipPos":[(43.7*offset,89.3, 3.5), "Arm", "ZZZ", "Wrist"]}
             ]
             
             #Thumb finger joints
@@ -116,12 +117,13 @@ def CreateDictionaries(function):
             {"pinkyTipPos":[(42*offset, 76.1, 2.2), "Hand", "PinkyFingerTip", "PinkyFinger3"]}
             ]
             
-            #Arm joint dictionary
+            #Leg joint dictionary
             dictLegJnts = [
             {"hipPos":[(9.9*offset, 87.8, 1.7), "Leg", "Hip", hipParent]},
             {"kneePos":[(11.9*offset, 46.4, 1.1), "Leg", "Knee", "Hip"]},
             {"anklePos":[(14.8*offset, 2.4, -3.8), "Leg", "Ankle", "Knee"]},
-            {"toesPos":[(17*offset, 2.7, 7.8), "Leg", "Toes", "Ankle"]}
+            {"toesPos":[(17*offset, 2.7, 7.8), "Leg", "Toes", "Ankle"]},
+            {"LegTipPos":[(17*offset, 2.7, 11.1), "Leg", "ZZZ", "Toes"]}
             ]
             
             fullDictArray = [
@@ -194,14 +196,21 @@ def spawnJoints(function):
     if mc.objExists(rN()+"_jnt_GRP"):                                                               #if the joint group already exists
         print "Rig already exists"                                                                  #do nothing
     elif mc.objExists(rN()+"_Loc_Master"):                                                          #otherwise if the loc master group works, 
+        #locGRP = mc.xform(rN()+"_Loc_Master", query = True, translation = True)
         jointGRP = mc.group(em = True, name = rN()+"_jnt_GRP")                                      #Creates joint group
-
+        #mc.xform((locGRP[0], locGRP[1], locGRP[2]), jointGRP) ##HELP## move joint group to locator group on creation.
         for armJnts in mc.listRelatives(rN()+ "_Loc_Arm*", type = "locator"):                            #for every object that has Loc_Arm in it:
             locListArms.append(mc.pickWalk(armJnts, direction = "Up")[0])                           #add it to the list of arm joints
+            
+            
         for legJnts in mc.listRelatives(rN()+ "_Loc_Leg*", type = "locator"):                            #Likewise for Leg
             locListLegs.append(mc.pickWalk(legJnts, direction = "Up")[0])                           #""
+            
+            
         for handJnts in mc.listRelatives(rN()+ "_Loc_Hand*", type = "locator"):                          #for every object that has Loc_Hand in it:
             locListHands.append(mc.pickWalk(handJnts, direction = "Up")[0])                         #add it to the list of hand joints
+            
+        
 
 ############################################################################################################################################
         ####Build Spine
@@ -285,21 +294,43 @@ def SetScale(component, axis): #Currently unused.
         mc.setAttr(component + ".localScale" + i, locScale)
         
 def BuildControls():
-    if mc.objExists(rN()+"Controls Group"):
+    if mc.objExists(rN()+"_ctrl_Group"):
         print "Controls already generated for " + rN()
     else:
-        CtrlGrp = mc.group(em = True, name = rN()+"Controls Group")
-        allJoints = mc.ls(rN()+"_jnt_*" + "*FK")
+        ctrlGrp = mc.group(em = True, name = rN()+"_ctrl_Group")
+        limbJoints = mc.ls(rN()+"_jnt_*" + "*FK")
         
-        for joint in allJoints:            
+        for i in limbJoints:
+            parentJnt = mc.pickWalk(i, d= "Up")[0]
+            ctr = parentJnt.replace("_jnt_" , "_ctrl_")
+            children = mc.listRelatives(parentJnt, children = True, path = True)
+            #print children
+            if len(children) > 1:
+                jntParentDict[parentJnt] = children[0]
+            else:
+                jntParentDict[parentJnt] = None
             
+        #print jntParentDict
+            
+            
+        for joint in limbJoints:
+            #print joint
             jntPos = mc.xform(joint, query = True, translation = True, worldSpace = True)
             jntRot = mc.xform(joint, query = True, rotation = True, worldSpace = True)
-            ctrl = mc.circle(r = 5, name = rN()+"_ctrl_bob")
+            ctrl = mc.circle(r = 5, name = joint.replace("_jnt_" , "_ctrl_"))
+            ctrlGrp = mc.group(name = joint.replace("_jnt_" , "_ctrl_grp_"))
+            jntParentDict[ctrlGrp] = ctrl
+            mc.select(clear = True)
+            mc.xform(ctrlGrp, translation = jntPos, rotation = jntRot, worldSpace = True)
             mc.xform(ctrl, translation = jntPos, rotation = jntRot, worldSpace = True)
-            mc.rotate(0,90,0,ctrl, relative = True, componentSpace = True)
-            
-    
+            #mc.rotate(0,90,0,ctrl, relative = True, componentSpace = True)
+            mc.rotate(0,90,0,ctrlGrp, relative = True, componentSpace = True)
+            #mc.parent(ctrl, ctrlGrp)
+            if "Toe" in joint:
+                mc.rotate(90,0,0,ctrl)
+        for key, value in jntParentDict.items():
+            #print key, value
+        
     ##HELP## #How do I edit curves to make them look fancy so I can align them to the joints and colour them?
     
 def DeleteControls():
