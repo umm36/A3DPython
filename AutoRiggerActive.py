@@ -10,11 +10,7 @@ mc.button(l = "Delete Locators", w = 175, c = "deleteLocators()")
 mc.button(l = "Create Joints", c = "createJoints()")
 mc.button(l = "Delete Joints", w = 175, c = "deleteJoints()")      
 mc.text("Spine Count", l = "Spine Count")
-spineCount = mc.intField(minValue = 1, maxValue = 10, value = 4)        
-mc.text("Finger Count", l = "Finger Count")
-fingerCount = mc.intField(minValue = 1, maxValue = 10, value = 4)      
-mc.text("Finger Joints", l = "Finger Joints")
-fingerJoints = mc.intField(minValue = 1, maxValue = 10, value = 3)
+spineCount = mc.intField(minValue = 1, maxValue = 10, value = 4)    
 
 mc.button(l = "GenerateControls", w = 175, c = "BuildControls()")
 mc.button(l = "Delete Controls", w = 175, c = "DeleteControls()")
@@ -23,12 +19,17 @@ mc.text("Rig Name", l = "Rig Name")
 mc.textField("NameOfRig", parent = "Column1", placeholderText = "Character Name/IDCode")
 mc.showWindow()
 
-locListArms = []
+locListArms = {}
 locListLegs = []
 locListHands = []
 
 
 parentDict = {}
+
+locatorDictionary = {}
+jointDictionary = {}
+controllerDictionary = {}
+
 jntParentDict = {}
 
 def rN(): #Rig Name
@@ -153,11 +154,20 @@ def CreateDictionaries(function):
         spawnJoints(function)
         #spawnHandJoints(function)
     elif function == "_ctrl_":
-        BuildControls(fullDictArray, side, function)
+        BuildControls()
     mc.select(clear = True)
-
-
-
+    
+    
+    '''
+    root = rN()+"_Loc_ROOT"
+    print mc.listRelatives(root, children = True)
+    locatorDictionary[root] = mc.listRelatives(root, parent = True, path = True)[0], mc.listRelatives(root, children = True, path = True)[1]
+    print locatorDictionary
+    locatorDictionary[locatorDictionary[root][1]] = mc.listRelatives(root, parent = True, path = True)[0], mc.listRelatives(root, children = True, path = True)[1]
+    print locatorDictionary
+    '''
+    
+    
 def spawnLocators(dictArray, side, function):                                                   
     if function == "_Loc_" and side == "L":                                                         #Only run this once.
         if mc.objExists(rN()+"_Loc_Master"):                                                        #if the master group already exists
@@ -174,12 +184,13 @@ def spawnLocators(dictArray, side, function):
                 else:                                                                               #otherwise
                     mc.parent(spine, rN()+"_Loc_SPINE_"+str(i-1))                                   #parent under the previous spine joint
                 mc.move(0, 110 + (15 * i), 2, spine)                                                #move the spine locator into position.
-    
+                
     for dictionary in dictArray:                                                                    #look at the collection of dictionaries.
         for dict in dictionary:                                                                     #look at the actual dictionary in the collection.
             for key, v in dict.items():                                                             #look at the items in the dictionaries.
                 jntloc = mc.spaceLocator(n = rN() + function + v[1] + "_" + side + "_" + v[2])      #create a locator with appropriate naming conventions.
                 mc.move(v[0][0],v[0][1],v[0][2], jntloc)                                            #move the locator into the correct position.
+                
                 if "Base"  not in key:                                                              #if the locator is NOT the base of a finger so such:                    
                     if key != "claviclePos" and key != "hipPos":                                    #if it is anything but the hip or clavicle:
                         mc.parent(jntloc , rN()+ function + v[1] + "_" + side + "_" + v[3])         #parent it as the dictionary dictates.
@@ -189,23 +200,48 @@ def spawnLocators(dictArray, side, function):
                         mc.parent(jntloc, rN()+ function + "ROOT")                                  #it must be a hip, parent to the root.
                 else:                                                                               #if it DOES have 'base' in the name, it's a finger soooooooooooo
                     mc.parent(jntloc, rN()+ function + "Arm" + "_" + side + "_" + "Wrist")          #parent to the wrist.
-                    
+
+
+                    #print jntloc 
+                
+                    #
+                
+                
+    #for k, v in locatorDictionary.items():
+        
+        #print "__________"
+        #print locatorDictionary
+        #print k
+        #print v[0] + " is the parent."
+        #print v[1] + " is the child."
+                    #####, mc.listRelatives(jntloc, children = True)[0]
 ##############################################################################################################################
 def spawnJoints(function):
+    print mc.listRelatives("*_Loc_SPINE_1", children = True)
+    #print locatorDictionary
     rigSwitch = ["_IK", "_FK", "_Bind"]#### Add "_Core" or add _Bind to hands and spine?            #defines the types of rigs
     if mc.objExists(rN()+"_jnt_GRP"):                                                               #if the joint group already exists
         print "Rig already exists"                                                                  #do nothing
     elif mc.objExists(rN()+"_Loc_Master"):                                                          #otherwise if the loc master group works, 
-        #locGRP = mc.xform(rN()+"_Loc_Master", query = True, translation = True)
+        #locGRP = mc.xform(rN()+"_Loc_Master", query = True, translation = True) ##HELP##
         jointGRP = mc.group(em = True, name = rN()+"_jnt_GRP")                                      #Creates joint group
         #mc.xform((locGRP[0], locGRP[1], locGRP[2]), jointGRP) ##HELP## move joint group to locator group on creation.
+        
+        #for armJnts in mc.listRelatives(rN()+ "_Loc_Arm*", type = "locator"):                            #for every object that has Loc_Arm in it:
+        #    locListArms[armJnts] = (mc.pickWalk(armJnts, direction = "Up")[0])                       #add it to the list of arm joints
+            
+            
+           
+            # print locListArms
+#            mc.pickWalk(armJnts, direction = "Down")[0]
         for armJnts in mc.listRelatives(rN()+ "_Loc_Arm*", type = "locator"):                            #for every object that has Loc_Arm in it:
-            locListArms.append(mc.pickWalk(armJnts, direction = "Up")[0])                           #add it to the list of arm joints
-            
-            
+            locListLegs.append(mc.pickWalk(armJnts, direction = "Up")[0])                           #add it to the list of arm joints
+          
+
+        
         for legJnts in mc.listRelatives(rN()+ "_Loc_Leg*", type = "locator"):                            #Likewise for Leg
             locListLegs.append(mc.pickWalk(legJnts, direction = "Up")[0])                           #""
-            
+             
             
         for handJnts in mc.listRelatives(rN()+ "_Loc_Hand*", type = "locator"):                          #for every object that has Loc_Hand in it:
             locListHands.append(mc.pickWalk(handJnts, direction = "Up")[0])                         #add it to the list of hand joints
@@ -215,8 +251,8 @@ def spawnJoints(function):
 ############################################################################################################################################
         ####Build Spine
         mc.select(clear = True)                                                                     #clear selection.
-        root = mc.ls(rN()+"_Loc_ROOT")                                                                  #defines the root locator
-        allSpines = mc.ls(rN()+ "_Loc_SPINE*", type = "locator")                                         #lists all spine locators
+        root = mc.ls(rN()+"_Loc_ROOT")                                                              #defines the root locator
+        allSpines = mc.ls(rN()+ "_Loc_SPINE*", type = "locator")                                    #lists all spine locators
         spine = mc.listRelatives(allSpines, parent = True, fullPath= True)                          #lists all parents of the spineShape
         rootPos = mc.xform(root, q = True, t = True, ws = True)                                     #get the position of the root locator
         rootJoint = mc.joint(radius = 4, position = rootPos, name = rN()+ function + "ROOT")        #creates the root joint
@@ -224,14 +260,13 @@ def spawnJoints(function):
         for i, s in enumerate(spine):                                                               #for each of the spines in the list
             pos = mc.xform(s, q = True, t = True, ws = True)                                        #set the position of the spine locators
             j = mc.joint(radius = 4, position = pos, name = rN()+ function + "SPINE_"+str(i+1))     #create a spine joint there.
-############################################################################################################################################
+
         ####Build Limbs
-        #print locListArms
+
         for rig in rigSwitch:                                                                       #for each rig of IK FK or Bind            
             makeLimbs(locListArms, rig)                                                             #make the limbs using the list of Arm locators
             makeLimbs(locListLegs, rig)                                                             #make the limbs using the list of Leg locators
-
-        makeHands(locListHands) ##HELP## How do MAKE HANDS ADSLHFASLJDFHDHKFZLSKHT
+        makeHands(locListHands)
 
         for key, value in parentDict.items():                                                       #for everything in the parent dictionary
             if "Clavicle" in key:                                                                   #if the key has 'Clavicle' in it
@@ -244,7 +279,7 @@ def spawnJoints(function):
                 mc.parent(key, "humanBody", absolute = True)                                        #"un-parent" it
                 mc.parent(key, value, absolute = True)                                              #then parent it according to the dictionary entry.
             mc.select(clear = True)                                                                 #deselect.
-
+############################################################################################################################################
 def makeLimbs(jointList, rig):                                                                      
     for counter, loc in enumerate(jointList):                                                       #for each thing and location in the locator list
             jParent = mc.pickWalk(loc, direction = "Up")[0].replace("_Loc_","_jnt_") + rig          #parent is whatever the locator is parented to, but joint, rather than locator, and add the rig.           
@@ -252,14 +287,13 @@ def makeLimbs(jointList, rig):
             jointName = loc.replace("_Loc_","_jnt_")                                                #set the name of the joint
             mc.select(clear = True)                                                                 #clear selection.
             jnt = mc.joint(name = jointName + rig, radius = 4)                                      #creates jnt as a joint with the correct name and a radius of 4.
-            print jointName ##HELP## #Why does the list get generated alphabetically? I have to name the end of the arm ZZZ so it gets added AFTER the Wrist.
+            #print jointName ##HELP## #Why does the list get generated alphabetically? I have to name the end of the arm ZZZ so it gets added AFTER the Wrist.
             mc.xform(jnt, translation = pos)                                                        #move the joint to the position it belongs.
             if "ZZZ" not in jnt and "Toes" not in jnt:  ##HELP## #debug: #Replace "ZZZ" with "End"
                 conDelete = mc.aimConstraint(jointList[counter+1], jnt)                             #creates an aim constraint from the joint just made looking at the next item in the list.
                 mc.delete(conDelete)                                                                #delete the constraint
             parentDict.update({jnt: jParent})                                                       #add the parent and the joint to a dictionary
             mc.select(clear = True)
-############################################################################################################################################
 
 
 def makeHands(handDictionary):
@@ -279,7 +313,94 @@ def makeHands(handDictionary):
             jParent = mc.pickWalk(loc, direction = "Up")[0].replace("_Loc_","_jnt_")                #parent each joint to the associated join of the locators parent
         parentDict.update({jnt: jParent})                                                           #add the parent and the joint to a dictionary       
         mc.select(clear = True)                                                                     #deselect the pickWalk.
+############################################################################################################################################
 
+
+    
+    ####How do I edit curves to make them look fancy so I can align them to the joints and colour them?
+def BuildControls():
+    if mc.objExists(rN()+"_ctrl_Group"):
+        print "Controls already generated for " + rN()
+    else:
+        ctrlGrp = mc.group(em = True, name = rN()+"_ctrl_GRP")
+        
+        limbJoints = mc.ls(rN()+"_jnt_*" + "*FK", type = "joint")
+        spineJoints = mc.ls(rN()+"*_SPINE*", type = "joint")
+        rootJoints = mc.ls(rN()+"*_ROOT", type = "joint")
+        
+        controlParentDict = {}
+        
+        for joint in rootJoints:
+            jntPos = mc.xform(joint, query = True, translation = True, worldSpace = True)
+            jntRot = mc.xform(joint, query = True, rotation = True, worldSpace = True)
+            rootControl = mc.circle(r = 25, name = joint.replace("_jnt_" , "_ctrl_"), normal=(0,1,0))
+            rootControlgrp = mc.group(name = joint.replace("_jnt_" , "_ctrl_grp_"))
+            mc.xform(rootControlgrp, translation = jntPos, rotation = jntRot, worldSpace = True)
+            
+             
+            mc.parent(rootControlgrp,ctrlGrp)
+             
+            mc.parentConstraint(rootControl, joint) 
+            
+        for joint in spineJoints:
+            jntPos = mc.xform(joint, query = True, translation = True, worldSpace = True)
+            jntRot = mc.xform(joint, query = True, rotation = True, worldSpace = True)
+            spineControl = mc.circle(r = 20, name = joint.replace("_jnt_" , "_ctrl_"), normal=(0,1,0))
+            spineControlgrp = mc.group(name = joint.replace("_jnt_" , "_ctrl_grp_"))
+            mc.xform(spineControlgrp, translation = jntPos, rotation = jntRot, worldSpace = True)
+            
+            
+            controlParentDict[spineControlgrp] = mc.pickWalk(joint, direction = "Up")[0].replace("_jnt_","_ctrl_")
+            mc.parentConstraint(spineControl, joint) 
+        
+        for joint in limbJoints:
+            parentJnt = mc.pickWalk(joint, d= "Up")[0]
+            ctr = parentJnt.replace("_jnt_" , "_ctrl_")
+            children = mc.listRelatives(parentJnt, children = True, path = True)
+            #print children
+            if len(children) > 1:
+                jntParentDict[parentJnt] = children[0]
+            else:
+                jntParentDict[parentJnt] = None
+
+            jntPos = mc.xform(joint, query = True, translation = True, worldSpace = True)
+            jntRot = mc.xform(joint, query = True, rotation = True, worldSpace = True)
+            ctrl = mc.circle(r = 8, nr = (1,0,0), name = joint.replace("_jnt_" , "_ctrl_"))
+            ctrlGrp = mc.group(name = joint.replace("_jnt_" , "_ctrl_grp_"))
+            jntParentDict[ctrlGrp] = ctrl
+            mc.select(clear = True)
+            mc.xform(ctrlGrp, translation = jntPos, rotation = jntRot, worldSpace = True)
+            mc.xform(ctrl, translation = jntPos, worldSpace = True)
+            #mc.rotate(0,90,0,ctrlGrp, relative = True, componentSpace = True)
+            if "Toes" in joint:
+                print joint
+                mc.rotate(0,0,90,ctrlGrp)
+                print ctrlGrp
+            mc.parentConstraint(ctrl, joint) 
+            
+            
+            controlParentDict[ctrlGrp] = mc.pickWalk(joint, direction = "Up")[0].replace("_jnt_","_ctrl_")
+            
+            
+        #for key, value in jntParentDict.items():
+            #print key, value
+            #print key
+            #print mc.listRelatives(key, children = True)[0]
+            #if mc.listRelatives(key, parent = True):
+            #    print mc.listRelatives(key, parent = True)[0]
+            #print "_________"
+        for key, value in controlParentDict.items():
+            mc.parent(key, value)
+            #print key + " is parented to " + value
+        
+            
+            
+            if joint == spineJoints[0]:
+                print joint + " parent to root" 
+                print spineJoints
+            
+            
+       
 ####Delete####
 def deleteLocators():
     nodes = mc.ls(rN()+"_Loc_*")
@@ -293,45 +414,6 @@ def SetScale(component, axis): #Currently unused.
     for i in axis:
         mc.setAttr(component + ".localScale" + i, locScale)
         
-def BuildControls():
-    if mc.objExists(rN()+"_ctrl_Group"):
-        print "Controls already generated for " + rN()
-    else:
-        ctrlGrp = mc.group(em = True, name = rN()+"_ctrl_Group")
-        limbJoints = mc.ls(rN()+"_jnt_*" + "*FK")
-        
-        for i in limbJoints:
-            parentJnt = mc.pickWalk(i, d= "Up")[0]
-            ctr = parentJnt.replace("_jnt_" , "_ctrl_")
-            children = mc.listRelatives(parentJnt, children = True, path = True)
-            #print children
-            if len(children) > 1:
-                jntParentDict[parentJnt] = children[0]
-            else:
-                jntParentDict[parentJnt] = None
-            
-        #print jntParentDict
-            
-            
-        for joint in limbJoints:
-            #print joint
-            jntPos = mc.xform(joint, query = True, translation = True, worldSpace = True)
-            jntRot = mc.xform(joint, query = True, rotation = True, worldSpace = True)
-            ctrl = mc.circle(r = 5, name = joint.replace("_jnt_" , "_ctrl_"))
-            ctrlGrp = mc.group(name = joint.replace("_jnt_" , "_ctrl_grp_"))
-            jntParentDict[ctrlGrp] = ctrl
-            mc.select(clear = True)
-            mc.xform(ctrlGrp, translation = jntPos, rotation = jntRot, worldSpace = True)
-            mc.xform(ctrl, translation = jntPos, rotation = jntRot, worldSpace = True)
-            #mc.rotate(0,90,0,ctrl, relative = True, componentSpace = True)
-            mc.rotate(0,90,0,ctrlGrp, relative = True, componentSpace = True)
-            #mc.parent(ctrl, ctrlGrp)
-            if "Toe" in joint:
-                mc.rotate(90,0,0,ctrl)
-        for key, value in jntParentDict.items():
-            #print key, value
-        
-    ##HELP## #How do I edit curves to make them look fancy so I can align them to the joints and colour them?
     
 def DeleteControls():
     nodes = mc.ls(rN()+"_ctrl*")
