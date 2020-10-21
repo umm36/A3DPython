@@ -1,0 +1,8 @@
+import maya.cmds as mc
+sel = mc.ls (selection=True)
+orig = sel[0]
+for i in sel:
+    if orig not in i:
+        print orig
+        print i
+        mc.transferAttributes(orig, i, transferPositions=0, transferNormals=0, transferUVs=2, transferColors=2, sampleSpace=5)
